@@ -294,12 +294,14 @@
 
     .field-label {
       font-size: 11px;
-      color: #555;
+      color: #0c0c0c;
       letter-spacing: 1px;
+      font-weight: bold;
+      text-transform: uppercase;
     }
 
     .field-value {
-      font-size: 11px;
+      font-size: 13px;
       color: #1a1a2e;
       line-height: 1.6;
       min-height: 1.2em;
@@ -315,11 +317,6 @@
       color: #444;
     }
 
-    .field-value:hover:not(:focus) { background: rgba(255,255,255,0.04); }
-    .field-value:focus {
-      background: rgba(0,0,0,0.4);
-      box-shadow: inset 0 0 0 2px var(--accent);
-    }
 
     /* ── CARD FOOTER ── */
     .card-footer {
@@ -823,11 +820,11 @@
   const thumbTexts = [null, null, null, null, null, "COMING SOON", "COMING SOON", "COMING SOON"];
 
   const defaults = [
-    { number:"01", title:"The Four Horsemen – Animated Comic Zine Video and Website", audience:"", status:"wip", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
-    { number:"02", title:"Away from Home – A Text-based Adventure", audience:"", status:"wip", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
-    { number:"03", title:"The Dream Between – Animated Comic Strip", audience:"", status:"wip", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
-    { number:"04", title:"CRU Audience Map – Interactive Infographics", audience:"", status:"wip", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
-    { number:"05", title:"Country Prayer Videos", audience:"", status:"wip", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
+    { number:"01", title:"The Four Horsemen – Animated Comic Zine Video and Website", audience:"Christians in the workplace", status:"wip", problem:"A Christian in the workplace grounds their identity and value in worldly pursuits, often neglecting the truth of God's Word.", built:"", walkthrough:"", testing:"", questions:"Provide feedback and order of priority.", ifWorks:"Explore distribution options for the web app/video, physical comic zine, and spoken word video." },
+    { number:"02", title:"Away from Home – A Text-based Adventure", audience:"ISM Ministries", status:"wip", problem:"The International Student journey is filled with unique challenges, and those serving them need a better understanding of the situations they face.", built:"", walkthrough:"", testing:"", questions:"Provide feedback and order of priority.", ifWorks:"Explore the narrative impact of pre-set scripts with branching dialogue (structured) vs AI-generated dialogues (free-form)" },
+    { number:"03", title:"The Dream Between – Animated Comic Strip", audience:"ISM Ministries", status:"wip", problem:"The International Student journey is filled with unique challenges, and those serving them need a better understanding of the situations they face.", built:"", walkthrough:"", testing:"", questions:"Provide feedback and order of priority.", ifWorks:"Consider an episodic series each with a unique student and narrative." },
+    { number:"04", title:"CRU Audience Map – Interactive Infographics", audience:"Evangelical and Missional Ministries", status:"wip", problem:"We need to present the different audience types in a personal and relatable way. The map on the CRU website shows friction with UX.", built:"", walkthrough:"", testing:"", questions:"Provide feedback and order of priority.", ifWorks:"Collaborate with CRU as an alternative option." },
+    { number:"05", title:"Country Prayer Videos", audience:"Evangelical and Missional Ministries and individuals, Prayer ministries", status:"wip", problem:"In a desire to pray for the salvation and providence for non-Christian countries, most Christians aren't aware of the challenges/realities of a nation and its missional statistics. They need specific prayer points.", built:"", walkthrough:"", testing:"", questions:"Provide feedback and order of priority.", ifWorks:"Share with ministries and add new countries to the series." },
     { number:"06", title:"", audience:"", status:"placeholder", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
     { number:"07", title:"", audience:"", status:"placeholder", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
     { number:"08", title:"", audience:"", status:"placeholder", problem:"", built:"", walkthrough:"", testing:"", questions:"", ifWorks:"" },
@@ -841,16 +838,7 @@
   ];
 
   function loadData() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return defaults;
-      const parsed = JSON.parse(saved);
-      return defaults.map((def, i) => Object.assign({}, parsed[i] || {}, {
-        number: def.number,
-        title: def.title,
-        status: def.status,
-      }));
-    } catch { return defaults; }
+    return defaults;
   }
 
   function saveData(data) {
@@ -903,7 +891,7 @@
         ${bodyFields.map(f => `
           <div class="field">
             <span class="field-label">${f.label}</span>
-            <div class="field-value" contenteditable="true" spellcheck="false" data-key="${f.key}" data-placeholder="..."></div>
+            <div class="field-value" data-key="${f.key}">${p[f.key] || ''}</div>
           </div>
         `).join('')}
       </div>
@@ -1147,6 +1135,22 @@
       if (!fb[i]) fb[i] = [];
       fb[i].push(entry);
       saveFeedback(fb);
+
+      // Send to Airtable via serverless proxy
+      fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prototype: prototypes[i].title || `Prototype ${prototypes[i].number}`,
+          name:      entry.name,
+          pay:       entry.pay,
+          easy:      entry.easy,
+          recommend: entry.recommend,
+          keep:      entry.keep,
+          thoughts:  entry.thoughts,
+          date:      entry.date
+        })
+      }).catch(() => {});
 
       // Reset form
       form.querySelectorAll('.fb-emoji-btn, .fb-dot-btn').forEach(b => b.classList.remove('selected'));
