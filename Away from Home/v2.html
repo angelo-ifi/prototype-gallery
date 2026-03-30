@@ -222,8 +222,11 @@
   }
 
   .c-flag {
-    font-size: 36px;
-    font-family: sans-serif;
+    width: 48px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
+    border: 1px solid #ddd;
   }
 
   .c-name {
@@ -423,22 +426,22 @@
     <div class="form-label">WHERE ARE YOU FROM?</div>
     <div class="country-grid" id="country-grid">
       <button class="country-btn" data-val="China" onclick="selectCountry(this)">
-        <span class="c-flag">🇨🇳</span><span class="c-name">CHINA</span>
+        <img class="c-flag" src="https://flagcdn.com/w80/cn.png" alt="China"><span class="c-name">CHINA</span>
       </button>
       <button class="country-btn" data-val="India" onclick="selectCountry(this)">
-        <span class="c-flag">🇮🇳</span><span class="c-name">INDIA</span>
+        <img class="c-flag" src="https://flagcdn.com/w80/in.png" alt="India"><span class="c-name">INDIA</span>
       </button>
       <button class="country-btn" data-val="Philippines" onclick="selectCountry(this)">
-        <span class="c-flag">🇵🇭</span><span class="c-name">PHILIPPINES</span>
+        <img class="c-flag" src="https://flagcdn.com/w80/ph.png" alt="Philippines"><span class="c-name">PHILIPPINES</span>
       </button>
       <button class="country-btn" data-val="Japan" onclick="selectCountry(this)">
-        <span class="c-flag">🇯🇵</span><span class="c-name">JAPAN</span>
+        <img class="c-flag" src="https://flagcdn.com/w80/jp.png" alt="Japan"><span class="c-name">JAPAN</span>
       </button>
       <button class="country-btn" data-val="Malaysia" onclick="selectCountry(this)">
-        <span class="c-flag">🇲🇾</span><span class="c-name">MALAYSIA</span>
+        <img class="c-flag" src="https://flagcdn.com/w80/my.png" alt="Malaysia"><span class="c-name">MALAYSIA</span>
       </button>
       <button class="country-btn" data-val="Indonesia" onclick="selectCountry(this)">
-        <span class="c-flag">🇮🇩</span><span class="c-name">INDONESIA</span>
+        <img class="c-flag" src="https://flagcdn.com/w80/id.png" alt="Indonesia"><span class="c-name">INDONESIA</span>
       </button>
     </div>
   </div>
