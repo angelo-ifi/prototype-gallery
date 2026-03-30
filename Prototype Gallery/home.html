@@ -728,6 +728,19 @@
     }
 
     .btn-feedback:hover { color: #ffffff; background: #0c0c0c; border-color: #0c0c0c; }
+
+    .btn-v1 {
+      font-family: var(--pixel);
+      font-size: 14px;
+      font-weight: 700;
+      background: #f0f0f0;
+      color: #555;
+      border: 3px solid #555;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: color 0.1s, background 0.1s, border-color 0.1s;
+    }
+    .btn-v1:hover { color: #ffffff; background: #0c0c0c; border-color: #0c0c0c; }
     .btn-feedback.has-feedback { color: var(--yellow); border-color: var(--yellow); }
 
     #export-btn {
@@ -926,56 +939,8 @@
       </div>
       <div class="card-footer" style="display:flex;gap:8px;align-items:center">
         <a class="${linkClass}" href="${linkHref}">▶ PLAY DEMO</a>
-        <button class="btn-feedback" data-index="${i}">✎ FEEDBACK</button>
-      </div>
-      <div class="feedback-panel" id="feedback-${i}">
-        <div class="fb-tabs">
-          <button class="fb-tab active" data-panel="form-${i}">✎ LEAVE FEEDBACK</button>
-          <button class="fb-tab" data-panel="responses-${i}">◈ RESPONSES (<span class="fb-count" data-index="${i}">0</span>)</button>
-        </div>
-        <div class="fb-form" id="form-${i}">
-          <div class="fb-question">
-            <div class="fb-question-label">Would you pay for this?</div>
-            <div class="fb-btn-group">
-              <button class="fb-emoji-btn" data-q="pay" data-v="yes">👍</button>
-              <button class="fb-emoji-btn" data-q="pay" data-v="no">👎</button>
-            </div>
-          </div>
-          <div class="fb-question">
-            <div class="fb-question-label">Was it easy to use?</div>
-            <div class="fb-btn-group">
-              <button class="fb-emoji-btn" data-q="easy" data-v="yes">👍</button>
-              <button class="fb-emoji-btn" data-q="easy" data-v="no">👎</button>
-            </div>
-          </div>
-          <div class="fb-question">
-            <div class="fb-question-label">Would you recommend this?</div>
-            <div class="fb-btn-group">
-              <button class="fb-emoji-btn" data-q="recommend" data-v="yes">👍</button>
-              <button class="fb-emoji-btn" data-q="recommend" data-v="no">👎</button>
-            </div>
-          </div>
-          <div class="fb-question">
-            <div class="fb-question-label">Should we keep building this?</div>
-            <div class="fb-btn-group">
-              <button class="fb-dot-btn green"  data-q="keep" data-v="yes">GO</button>
-              <button class="fb-dot-btn yellow" data-q="keep" data-v="maybe">PIVOT</button>
-              <button class="fb-dot-btn red"    data-q="keep" data-v="no">STOP</button>
-            </div>
-          </div>
-          <div class="fb-question">
-            <div class="fb-text-label">Any thoughts? <span>(optional)</span></div>
-            <textarea class="fb-textarea" placeholder="What stood out? What would you change?"></textarea>
-          </div>
-          <div class="fb-question">
-            <div class="fb-text-label">Name <span>(optional)</span></div>
-            <input class="fb-name-input" type="text" placeholder="Anonymous">
-          </div>
-          <button class="fb-submit-btn" data-index="${i}">▶ SUBMIT</button>
-        </div>
-        <div class="fb-responses" id="responses-${i}">
-          <div class="fb-list" id="fb-list-${i}"></div>
-        </div>
+        <button class="btn-feedback" onclick="openModal('https://forms.gle/13HTGExSugDuu8cJA', 'Feedback')">✎ FEEDBACK</button>
+        ${i === 1 ? `<button class="btn-v1" onclick="openModal('../Away from Home/index.html', 'Away from Home — V1')">V1</button>` : ''}
       </div>
     `;
 
@@ -1048,194 +1013,7 @@
   document.getElementById('modal-backdrop').addEventListener('click', closeModal);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-  // ── FEEDBACK ──────────────────────────────────────────────────────────────
-  const FB_KEY = 'prototype-hub-feedback';
 
-  function loadFeedback() {
-    try { return JSON.parse(localStorage.getItem(FB_KEY)) || {}; }
-    catch { return {}; }
-  }
-
-  function saveFeedback(fb) {
-    localStorage.setItem(FB_KEY, JSON.stringify(fb));
-  }
-
-  const keepLabels = { yes: '🟢 Yes', maybe: '🟡 Maybe', no: '🔴 No' };
-
-  function renderResponses(index) {
-    const fb = loadFeedback();
-    const entries = fb[index] || [];
-    const list = document.getElementById(`fb-list-${index}`);
-    list.innerHTML = '';
-
-    entries.forEach((entry, j) => {
-      const div = document.createElement('div');
-      div.className = 'fb-entry';
-
-      const scores = [
-        entry.pay       != null ? `Pay: ${entry.pay === 'yes' ? '👍' : '👎'}` : null,
-        entry.easy      != null ? `Easy: ${entry.easy === 'yes' ? '👍' : '👎'}` : null,
-        entry.recommend != null ? `Recommend: ${entry.recommend === 'yes' ? '👍' : '👎'}` : null,
-        entry.keep      != null ? `Keep: ${keepLabels[entry.keep]}` : null,
-      ].filter(Boolean);
-
-      div.innerHTML = `
-        <div class="fb-entry-top">
-          <span class="fb-entry-name">${entry.name || 'Anonymous'}</span>
-          <span class="fb-entry-date">${entry.date}</span>
-        </div>
-        ${scores.length ? `<div class="fb-entry-scores">${scores.map(s => `<span class="fb-score-chip">${s}</span>`).join('')}</div>` : ''}
-        ${entry.thoughts ? `<div class="fb-entry-thoughts">"${entry.thoughts}"</div>` : ''}
-        <button class="fb-entry-delete" data-j="${j}">✕ DELETE</button>
-      `;
-
-      div.querySelector('.fb-entry-delete').addEventListener('click', () => {
-        const fb2 = loadFeedback();
-        fb2[index].splice(j, 1);
-        saveFeedback(fb2);
-        renderResponses(index);
-        updateFeedbackBtn(index);
-      });
-
-      list.appendChild(div);
-    });
-
-    list.scrollTop = list.scrollHeight;
-  }
-
-  function updateFeedbackBtn(index) {
-    const fb = loadFeedback();
-    const count = (fb[index] || []).length;
-    const btn = document.querySelector(`.btn-feedback[data-index="${index}"]`);
-    const countEl = document.querySelector(`.fb-count[data-index="${index}"]`);
-    if (btn) {
-      btn.textContent = count > 0 ? `✎ FEEDBACK (${count})` : '✎ FEEDBACK';
-      btn.classList.toggle('has-feedback', count > 0);
-    }
-    if (countEl) countEl.textContent = count;
-  }
-
-  // Toggle panel open/closed
-  document.querySelectorAll('.btn-feedback').forEach(btn => {
-    const i = parseInt(btn.dataset.index);
-    updateFeedbackBtn(i);
-    btn.addEventListener('click', () => {
-      const panel = document.getElementById(`feedback-${i}`);
-      panel.classList.toggle('open');
-    });
-  });
-
-  // Tab switching
-  document.querySelectorAll('.fb-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const panelId = tab.dataset.panel;
-      const tabs = tab.closest('.fb-tabs').querySelectorAll('.fb-tab');
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      const fbPanel = tab.closest('.feedback-panel');
-      fbPanel.querySelector('.fb-form') && (fbPanel.querySelector('.fb-form').style.display = 'none');
-      fbPanel.querySelector('.fb-responses') && fbPanel.querySelector('.fb-responses').classList.remove('visible');
-
-      const target = document.getElementById(panelId);
-      if (panelId.startsWith('form-')) {
-        target.style.display = 'flex';
-      } else {
-        target.classList.add('visible');
-        const idx = parseInt(panelId.replace('responses-', ''));
-        renderResponses(idx);
-      }
-    });
-  });
-
-  // Emoji / dot button selection (per form)
-  document.querySelectorAll('.fb-form').forEach(form => {
-    form.querySelectorAll('.fb-emoji-btn, .fb-dot-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const q = btn.dataset.q;
-        form.querySelectorAll(`[data-q="${q}"]`).forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-      });
-    });
-  });
-
-  // Submit
-  document.querySelectorAll('.fb-submit-btn').forEach(btn => {
-    const i = parseInt(btn.dataset.index);
-    btn.addEventListener('click', () => {
-      const form = document.getElementById(`form-${i}`);
-      const getVal = q => form.querySelector(`[data-q="${q}"].selected`)?.dataset.v ?? null;
-
-      const entry = {
-        pay:       getVal('pay'),
-        easy:      getVal('easy'),
-        recommend: getVal('recommend'),
-        keep:      getVal('keep'),
-        thoughts:  form.querySelector('.fb-textarea').value.trim(),
-        name:      form.querySelector('.fb-name-input').value.trim(),
-        date: new Date().toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }),
-      };
-
-      const fb = loadFeedback();
-      if (!fb[i]) fb[i] = [];
-      fb[i].push(entry);
-      saveFeedback(fb);
-
-      // Send to Airtable via serverless proxy
-      fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prototype: prototypes[i].title || `Prototype ${prototypes[i].number}`,
-          name:      entry.name,
-          pay:       entry.pay,
-          easy:      entry.easy,
-          recommend: entry.recommend,
-          keep:      entry.keep,
-          thoughts:  entry.thoughts,
-          date:      entry.date
-        })
-      }).then(res => { if (!res.ok) showErrorToast(); }).catch(() => showErrorToast());
-
-      // Reset form
-      form.querySelectorAll('.fb-emoji-btn, .fb-dot-btn').forEach(b => b.classList.remove('selected'));
-      form.querySelector('.fb-textarea').value = '';
-      form.querySelector('.fb-name-input').value = '';
-
-      updateFeedbackBtn(i);
-      showToast();
-
-      // Switch to responses tab
-      const responsesTab = document.querySelector(`[data-panel="responses-${i}"]`);
-      if (responsesTab) responsesTab.click();
-    });
-  });
-
-  // ── EXPORT ────────────────────────────────────────────────────────────────
-  document.getElementById('export-btn').addEventListener('click', () => {
-    const data = loadData();
-    const fb   = loadFeedback();
-
-    // Inject saved data into defaults so the export is self-contained
-    const exportedHTML = document.documentElement.outerHTML
-      .replace(
-        /const defaults = \[[\s\S]*?\];/,
-        `const defaults = ${JSON.stringify(data, null, 4)};`
-      )
-      .replace(
-        /\/\/ ── EXPORT[\s\S]*$/,
-        `// Data exported on ${new Date().toLocaleString()}\n  localStorage.setItem('${STORAGE_KEY}', JSON.stringify(${JSON.stringify(data)}));\n  localStorage.setItem('${FB_KEY}', JSON.stringify(${JSON.stringify(fb)}));\n<` + `/script>\n</body>\n</html>`
-      );
-
-    const blob = new Blob([exportedHTML], { type: 'text/html' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `prototype-gallery-export-${new Date().toISOString().slice(0,10)}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast();
-  });
 </script>
 </body>
 </html>
