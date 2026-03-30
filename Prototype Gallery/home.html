@@ -940,6 +940,7 @@
       <div class="card-footer" style="display:flex;gap:8px;align-items:center">
         <a class="${linkClass}" href="${linkHref}">▶ PLAY DEMO</a>
         <button class="btn-feedback" onclick="openModal('https://forms.gle/13HTGExSugDuu8cJA', 'Feedback')">✎ FEEDBACK</button>
+        ${i === 0 ? `<button class="btn-v1" onclick="openModal('../The Four Horsemen/Four Horsemen Comic_compressed.pdf', 'The Four Horsemen — Full Comic')">📖 FULL COMIC</button>` : ''}
         ${i === 1 ? `<button class="btn-v1" onclick="openModal('../Away from Home/index.html', 'Away from Home — V1')">V1</button>` : ''}
       </div>
     `;
