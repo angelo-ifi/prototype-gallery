@@ -381,6 +381,25 @@
 
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    #toast-error {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #ff3333;
+      color: #fff;
+      font-family: var(--pixel);
+      font-size: 13px;
+      padding: 10px 20px;
+      border: 3px solid var(--black);
+      box-shadow: 4px 4px 0 var(--black);
+      opacity: 0;
+      transition: opacity 0.15s, transform 0.15s;
+      pointer-events: none;
+      z-index: 99;
+    }
+    #toast-error.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
     /* ── FOOTER ── */
     footer {
       max-width: 1400px;
@@ -739,6 +758,7 @@
 </footer>
 
 <div id="toast">✔ SAVED!</div>
+<div id="toast-error">✖ SYNC FAILED — SAVED LOCALLY</div>
 
 <div id="modal">
   <div id="modal-backdrop"></div>
@@ -853,6 +873,14 @@
     t.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  let errorToastTimer;
+  function showErrorToast() {
+    const t = document.getElementById('toast-error');
+    t.classList.add('show');
+    clearTimeout(errorToastTimer);
+    errorToastTimer = setTimeout(() => t.classList.remove('show'), 3000);
   }
 
   const prototypes = loadData();
@@ -1167,7 +1195,7 @@
           thoughts:  entry.thoughts,
           date:      entry.date
         })
-      }).catch(() => {});
+      }).then(res => { if (!res.ok) showErrorToast(); }).catch(() => showErrorToast());
 
       // Reset form
       form.querySelectorAll('.fb-emoji-btn, .fb-dot-btn').forEach(b => b.classList.remove('selected'));
