@@ -748,6 +748,7 @@
       <button id="modal-close" onclick="closeModal()">✕ CLOSE</button>
     </div>
     <iframe id="modal-frame" src="" allowfullscreen></iframe>
+    <video id="modal-video" controls style="display:none;flex:1;width:100%;background:#000;"></video>
   </div>
 </div>
 
@@ -805,7 +806,7 @@
     "../Away from Home/v2.html",
     "../Manga/story.html",
     "../CRU Interactive Audience Map/index.html",
-    "https://drive.google.com/file/d/1uLvgUn90sQOksR0NPedyE98JUw7xYF66/view?usp=sharing", null, null, null,
+    "../Country Prayer Videos/The Philippines/The Philippines.mp4", null, null, null,
   ];
 
   // Thumbnail images per prototype (relative paths or null)
@@ -988,7 +989,19 @@
   });
 
   function openModal(src, title) {
-    document.getElementById('modal-frame').src = src;
+    const isVideo = src.endsWith('.mp4');
+    const frame = document.getElementById('modal-frame');
+    const video = document.getElementById('modal-video');
+    if (isVideo) {
+      frame.style.display = 'none';
+      video.style.display = 'block';
+      video.src = src;
+      video.play();
+    } else {
+      video.style.display = 'none';
+      frame.style.display = 'block';
+      frame.src = src;
+    }
     document.getElementById('modal-title').textContent = '▶ ' + title.toUpperCase();
     document.getElementById('modal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -996,7 +1009,11 @@
 
   function closeModal() {
     document.getElementById('modal').classList.remove('open');
-    document.getElementById('modal-frame').src = '';
+    const frame = document.getElementById('modal-frame');
+    const video = document.getElementById('modal-video');
+    frame.src = '';
+    video.pause();
+    video.src = '';
     document.body.style.overflow = '';
   }
 
