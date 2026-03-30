@@ -1,36 +1,28 @@
 # Angelo's Prototype Gallery
 
 ## What This Is
-A homepage (`home.html`) that showcases up to 6 prototypes. Each card has editable fields, a thumbnail, a demo lightbox, and a structured feedback form. All edits and feedback save automatically to `localStorage`.
-
-## Folder Structure
-```
-Desktop/Claude/
-├── Prototype Gallery/
-│   └── home.html          ← main file
-└── The Four Horsemen/
-    ├── index.html          ← comic viewer prototype
-    └── page1–10.png
-```
+A homepage (`home.html`) that showcases 8 prototypes. Each card has editable body fields, a thumbnail, a demo lightbox, and a feedback form. Deployed on Vercel; served as the root directory.
 
 ## Prototype Slots
+
 | # | Title | Status | Link | Thumbnail |
 |---|-------|--------|------|-----------|
-| 01 | The Four Horsemen | WIP | `../The Four Horsemen/index.html` | `../The Four Horsemen/page1.png` |
-| 02–06 | Empty | Placeholder | null | null |
+| 01 | The Four Horsemen – Animated Comic Zine Video and Website | WIP | `../The Four Horsemen/index.html` | `Images/four-horsemen.png` |
+| 02 | Away from Home – A Text-based Adventure | WIP | `../Away from Home/v2.html` | `../Away from Home/Images/Screenshot...` |
+| 03 | The Dream Between – Animated Comic Strip | WIP | `../Manga/story.html` | `Images/Manga.png` |
+| 04 | CRU Audience Map – Interactive Infographics | WIP | `../CRU Interactive Audience Map/index.html` | `Images/Audience-map.png` |
+| 05 | Country Prayer Videos | WIP | `../Country Prayer Videos/index.html` | `Images/country-prayer-videos.jpg` |
+| 06–08 | Empty | Placeholder | null | null — shows "COMING SOON" |
 
-To add a new prototype, update the `links[]` and `thumbnails[]` arrays in the script, and set `status: "wip"` in `defaults[]`.
+To add/change a prototype: update `links[]`, `thumbnails[]`, and `defaults[]` in the script. Titles are hardcoded in `defaults[]` and rendered as static (non-editable) text.
 
-## Card Fields (all editable inline)
-- Title & Audience (in card header)
-- Problem / Pain Point
-- What We Built
-- Walkthrough / Demo
-- What We're Testing
-- Questions for Advisors
-- If This Works…
+## Card Fields
+
+- **Title** — static, hardcoded in `defaults[]`
+- **Body fields** (all `contenteditable`, save to localStorage): Audience, Problem / Pain Point, Questions for Advisors, If This Works…
 
 ## Feedback Form (per card)
+
 Two-tab panel: **Leave Feedback** / **Responses**
 
 Questions:
@@ -42,17 +34,18 @@ Questions:
 - Name (optional, defaults to Anonymous)
 
 ## Design
-- 16-bit retro aesthetic with Press Start 2P font
-- Scanline background, star field
-- Single accent color: `#00e5ff` (cyan)
-- Title color: `#ff3ca0` (pink) with cyan drop shadow
-- Cards: dark navy `#16213e`, white pixel borders, hard drop shadows
-- Demo opens in a modal lightbox (iframe), closeable via ✕, backdrop click, or Escape
+
+- **Font**: Inter
+- **Background**: `#0c0c0c` with scanline overlay and animated star field canvas
+- **Cards**: white background, dark (`#1a1a2e`) borders, dark text, hard drop shadows
+- **Play Demo button**: bold, white text on orange (`#ff6a00`)
+- **Feedback button**: bold, dark background, white text on hover
+- **Demo**: opens in a modal lightbox (iframe), closeable via ✕, backdrop click, or Escape
 
 ## localStorage Keys
-- `prototype-hub-data` — card field content
+- `prototype-hub-data` — card body field content
 - `prototype-hub-feedback` — feedback responses per prototype index
 
 ## Preferences
-- Always backup to `home.backup.html` before big changes
-- Auto-open Firefox after every revision
+- Backup to `home.backup.html` before big changes
+- `index.html` is a meta-redirect to `home.html` — do not remove it (required for Vercel)
