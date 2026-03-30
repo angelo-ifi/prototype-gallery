@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRU Audience Map — Interactive Spiritual Journey</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0d1b2a;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.site-header {
+  background: #1a2440;
+  color: white;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #2d3a5a;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+}
+.site-logo {
+  font-family: 'Lora', serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.site-logo span { color: #fdb137; }
+.header-sub {
+  font-size: 0.72rem;
+  color: #7a8fb5;
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+.legend {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  color: #9aaac5;
+  font-weight: 500;
+}
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.header-hint {
+  font-size: 0.68rem;
+  color: #5a6a85;
+  background: rgba(255,255,255,0.05);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #2d3a5a;
+}
+
+/* ── MAP SECTION ── */
+.map-section {
+  padding: 174px 20px 16px;
+  display: flex;
+  justify-content: center;
+}
+.map-container {
+  position: relative;
+  width: 100%;
+  max-width: 1320px;
+  border-radius: 14px;
+  overflow: visible;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.map-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 14px;
+}
+
+/* ── SPRITES LAYER ── */
+.sprites-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* ── SPRITE WRAPPER ── */
+.sprite-wrapper {
+  position: absolute;
+  pointer-events: all;
+  cursor: pointer;
+  transform: translate(-50%, -100%);
+  z-index: 10;
+}
+.sprite-wrapper:hover { z-index: 50; }
+
+/* Pulse ring */
+.sprite-pulse {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 6px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.5;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+  50% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+}
+
+/* Figure */
+.sprite-figure {
+  width: 38px;
+  height: 56px;
+  display: block;
+  transition: transform 0.18s ease;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));
+}
+.sprite-wrapper:hover .sprite-figure {
+  transform: scale(1.25) translateY(-5px);
+}
+
+/* Arm raise on hover */
+.sprite-figure .arm-l,
+.sprite-figure .arm-r {
+  transition: transform 0.25s ease;
+  transform-box: view-box;
+}
+.sprite-wrapper:hover .sprite-figure .arm-l {
+  transform: rotate(70deg);
+  transform-origin: 20px 22px;
+}
+.sprite-wrapper:hover .sprite-figure .arm-r {
+  transform: rotate(-70deg);
+  transform-origin: 20px 22px;
+}
+.sprite-wrapper:hover .sprite-figure .arm-l.boat-arm {
+  transform-origin: 27px 22px;
+}
+.sprite-wrapper:hover .sprite-figure .arm-r.boat-arm {
+  transform-origin: 27px 22px;
+}
+
+/* ── THOUGHT BUBBLE ── */
+.thought-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: #fffdf7;
+  border-radius: 14px;
+  padding: 10px 13px;
+  width: 168px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  border: 1.5px solid #e8e0d0;
+}
+.sprite-wrapper:hover .thought-bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+/* Tail */
+.thought-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #fffdf7;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+}
+.bubble-stage-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-bottom: 5px;
+}
+.bubble-quote {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.71rem;
+  color: #4a4035;
+  line-height: 1.45;
+}
+.bubble-cta {
+  font-size: 0.59rem;
+  color: #a09080;
+  margin-top: 6px;
+  text-align: right;
+  letter-spacing: 0.03em;
+}
+
+/* Bubble — below variant */
+.sprite-wrapper[data-dir="below"] .thought-bubble {
+  bottom: auto;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(-6px);
+}
+.sprite-wrapper[data-dir="below"]:hover .thought-bubble {
+  transform: translateX(-50%) translateY(0);
+}
+.sprite-wrapper[data-dir="below"] .thought-bubble::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #fffdf7;
+}
+
+/* Bubble — left variant (bubble floats left of sprite) */
+.sprite-wrapper[data-dir="left"] .thought-bubble {
+  bottom: 50%;
+  left: auto;
+  right: calc(100% + 12px);
+  transform: translateY(40%) translateX(6px);
+  width: 155px;
+}
+.sprite-wrapper[data-dir="left"]:hover .thought-bubble {
+  transform: translateY(40%) translateX(0);
+}
+.sprite-wrapper[data-dir="left"] .thought-bubble::after {
+  top: 40%;
+  left: 100%;
+  transform: translateY(-50%);
+  border-top-color: transparent;
+  border-left-color: #fffdf7;
+}
+
+/* ── SIDE PANEL ── */
+.side-panel {
+  position: fixed;
+  top: 0; right: 0;
+  width: 550px;
+  height: 100vh;
+  background: #fff;
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 50px rgba(0,0,0,0.25);
+}
+.side-panel.open { transform: translateX(0); }
+
+.panel-header {
+  padding: 22px 22px 18px;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+}
+.panel-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s;
+  line-height: 1;
+}
+.panel-close:hover { background: rgba(255,255,255,0.38); }
+.panel-category {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.78;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.panel-title {
+  font-family: 'Lora', serif;
+  font-size: 1.9rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+.panel-definition {
+  font-size: 0.82rem;
+  opacity: 0.88;
+  line-height: 1.55;
+}
+
+/* Tabs */
+.panel-tabs {
+  display: flex;
+  background: #f8f8f8;
+  border-bottom: 2px solid #efefef;
+  flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1;
+  padding: 11px 4px;
+  border: none;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #aaa;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: all 0.18s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.tab-btn.active {
+  color: #1a2440;
+  border-bottom-color: #1a2440;
+  background: #fff;
+}
+.tab-btn:hover:not(.active) { color: #666; }
+
+/* Panel content */
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  scroll-behavior: smooth;
+}
+.panel-content::-webkit-scrollbar { width: 4px; }
+.panel-content::-webkit-scrollbar-track { background: #f5f5f5; }
+.panel-content::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 2px; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.panel-quote {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #333;
+  border-left: 3px solid var(--sc, #999);
+  padding-left: 13px;
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+.section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: #aaa;
+  margin-bottom: 9px;
+  margin-top: 18px;
+}
+.section-title:first-child { margin-top: 0; }
+
+.bullet-list { list-style: none; padding: 0; }
+.bullet-list li {
+  padding: 6px 0 6px 18px;
+  position: relative;
+  font-size: 0.83rem;
+  color: #444;
+  line-height: 1.5;
+  border-bottom: 1px solid #f5f5f5;
+}
+.bullet-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 2px;
+  color: var(--sc, #999);
+  font-size: 0.7rem;
+  top: 8px;
+}
+
+.insight-card {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 11px 13px;
+  margin-bottom: 7px;
+  border-left: 3px solid var(--sc, #ccc);
+}
+.insight-title {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #1a2440;
+  margin-bottom: 3px;
+}
+.insight-body {
+  font-size: 0.82rem;
+  color: #666;
+  line-height: 1.45;
+}
+
+.overview-img {
+  width: 100%;
+  aspect-ratio: 16 / 6.4;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.overview-img-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 6.4;
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 2px dashed #ddd;
+}
+
+.glance-tags {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 16px;
+}
+.glance-tag {
+  display: block;
+  font-size: 0.83rem;
+  color: #444;
+  line-height: 1.5;
+  padding: 6px 0 6px 18px;
+  position: relative;
+  border-bottom: 1px solid #f5f5f5;
+}
+.glance-tag::before {
+  content: '▸';
+  position: absolute;
+  left: 2px;
+  color: var(--sc, #999);
+  font-size: 0.7rem;
+  top: 8px;
+}
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.insight-row {
+  font-size: 0.83rem;
+  color: #555;
+  line-height: 1.55;
+}
+.insight-row-title {
+  font-weight: 600;
+  color: #1a2440;
+}
+
+.engage-block { margin-bottom: 18px; }
+.engage-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #1a2440;
+  margin-bottom: 9px;
+}
+.engage-icon {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--sc, #999);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.42);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s;
+}
+.overlay.active { opacity: 1; pointer-events: all; }
+
+/* Footer */
+.site-footer {
+  text-align: center;
+  padding: 14px;
+  color: #3a4a5a;
+  font-size: 0.7rem;
+  background: #0d1b2a;
+  border-top: 1px solid #1a2a3a;
+}
+
+/* ── TALK TAB ── */
+.talk-intro {
+  font-size: 0.8rem;
+  color: #7a8fb5;
+  margin-bottom: 14px;
+}
+.talk-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.talk-q-btn {
+  background: #f0f4ff;
+  border: 1.5px solid #c5d0e8;
+  border-radius: 20px;
+  padding: 9px 16px;
+  font-size: 0.82rem;
+  color: #1a2440;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.talk-q-btn:hover { background: #dce6ff; border-color: #aab8d8; }
+.talk-q-btn.asked { opacity: 0.45; cursor: default; }
+.talk-convo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.talk-bubble {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.talk-bubble-user {
+  align-self: flex-end;
+  background: #1a2440;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.talk-bubble-char {
+  align-self: flex-start;
+  background: #f5f5f0;
+  color: #1a1a2e;
+  border-bottom-left-radius: 4px;
+  border-left: 3px solid var(--char-color, #888);
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <div class="site-logo">CRU <span>Audience Map</span></div>
+    <div class="header-sub">Interactive Spiritual Journey Framework</div>
+  </div>
+  <div class="header-hint">Hover sprites · Click to explore</div>
+</header>
+
+<main>
+  <div class="map-section">
+    <div class="map-container">
+      <img src="Images/Screenshot 2026-03-12 at 10-07-13 Map - Audience Map.png" class="map-image" alt="CRU Audience Map">
+      <div class="sprites-layer" id="spritesLayer"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">©2026 Campus Crusade for Christ International · All Rights Reserved</footer>
+
+<!-- Side Panel -->
+<div class="side-panel" id="sidePanel">
+  <button class="panel-close" id="panelClose">✕</button>
+  <div class="panel-header" id="panelHeader">
+    <div class="panel-category" id="panelCategory"></div>
+    <div class="panel-title" id="panelTitle"></div>
+    <div class="panel-definition" id="panelDef"></div>
+  </div>
+  <div class="panel-tabs">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="movement">Movement</button>
+    <button class="tab-btn" data-tab="engage">Engage</button>
+    <button class="tab-btn" data-tab="talk">Talk</button>
+  </div>
+  <div class="panel-content" id="panelContent">
+    <div class="tab-content active" id="tab-overview"></div>
+    <div class="tab-content" id="tab-movement"></div>
+    <div class="tab-content" id="tab-engage"></div>
+    <div class="tab-content" id="tab-talk"></div>
+  </div>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+const STAGES = {
+  hostile: {
+    name:"Hostile", color:"#7c8da5", category:"Non-Christian",
+    pos:{x:18,y:82}, dir:"above", pose:"defensive",
+    quote:"Christianity is offensive to me in multiple ways.",
+    def:"Aware of the bad things associated with Christianity: socially, historically. Opposed to Christianity passively or actively.",
+    glance:["Many oppose religion broadly; Christianity is one component","Believe Christianity causes harm","50% of interviewed participants are Dechurched","Least likely stage to transition away from once established"],
+    insights:[{t:"Dechurched",b:"Half previously belonged to Christian communities or identified as Christian."},{t:"Appear Uninterested",b:"Differ fundamentally from the Uninterested stage upon deeper examination."},{t:"No Need for Religion",b:"Believe society has evolved beyond requiring religion."},{t:"Trauma",b:"Dechurched members may carry wounds from church or Christian experiences."},{t:"Christians as Hypocrites",b:"View Christians as contradicting core Christian teachings."}],
+    movement:["Rarely transition out of this stage once established","Church-related hurt, abuse, or betrayal maintains this position","Many oppose institutionalized religion rather than Jesus specifically","Dechurched half likely predict your responses based on past experiences"],
+    pray:["Empathize with their pain by recalling times you've been hurt by group members","Ask God to free you from needing to 'win' them over","Pray for the ability to forgive their hostility"],
+    plan:["Actively Hostile: identify shared values like helping others; demonstrate compassionate action","Passively Hostile: show how Jesus differs from institutional Christianity","Share your own experiences and why you reached different conclusions"],
+    cautions:["Actions demonstrate message more effectively than words","Avoid positioning yourself as an opponent","Patience and empathy are essential; embodying Christlikeness is key","Rebuilding trust is foundational"]
+  },
+  unaware: {
+    name:"Unaware", color:"#593649", category:"Non-Christian",
+    pos:{x:38,y:83}, dir:"above", pose:"confused", hasBoat:true,
+    img:"Images/Sample 2.jpg",
+    quote:"Who is God? Where does he live? Why can't we see him?",
+    def:"No awareness of the gospel or of Christianity.",
+    glance:["Have never knowingly met a Christian","Have not heard of Christianity","May follow another religion/worldview (Hindu, Sikh, Buddhist)","May be open but lack context"],
+    insights:[{t:"Little Online Presence",b:"Truly Unaware people are challenging to locate online."},{t:"Unfamiliarity",b:"Christian terminology is completely foreign to them."},{t:"Involved Elsewhere",b:"May identify as Sikh, Hindu, or Buddhist."}],
+    movement:["Without exposure to Jesus/Christianity, people remain in this stage","First negative exposure likely moves toward Uninterested, potentially Hostile","Most unintentionally move to Uninterested, Open, or Professing early in life","Positive learning about Jesus/Christianity facilitates growth movement"],
+    pray:["Recognizing shared starting point builds empathy","Seek cultural 'signposts' revealing God","Listen and pray for cultural understanding"],
+    plan:["Use accessible language avoiding Christian insider terminology","Learn about their worldview to build bridges","Consider: might someone labeled 'uninterested' actually be 'unaware'?"],
+    cautions:["Kindness matters more than arguments","Use common, non-exclusionary language","Recognize terminology may have different spiritual meanings","Recognize the privilege of being their first Christian contact"]
+  },
+  uninterested: {
+    name:"Uninterested", color:"#73a2ac", category:"Non-Christian",
+    pos:{x:26,y:50}, dir:"above", pose:"relaxed",
+    quote:"I know enough about Christianity, and I don't want to know more.",
+    def:"Aware of Christianity in some cultural contexts but do not want to learn more. Generally apathetic, not hostile.",
+    glance:["Goals: be happy, prosper financially, provide for family, improve mental health","Religion is irrelevant to their life","Neutral view of Christians but skeptical of organized religion","Intentional decision that Christianity is not for them"],
+    insights:[{t:"Religion is Irrelevant",b:"May be disinterested in spirituality/religion in general."},{t:"Intentional Decision",b:"Have decided that Christianity is not for them."},{t:"Familiarity with Christianity",b:"Some familiarity through friends/family, shows/movies; may have misinformation."}],
+    movement:["If intentionally uninterested, unlikely to move out — this is a danger zone","May become Hostile due to negative interactions with Christians","May move to Open when they can trust their casual Christian friends","May move to Open when free to explore on their own terms"],
+    pray:["Ask God to deepen your empathy and love for those in Uninterested","Pray that God would spark a curiosity in their hearts"],
+    plan:["Seek to understand their journey without an agenda","Events on topics related to their goals — do NOT bait and switch","Give them ways to explore independently and in their own time"],
+    cautions:["Do not assume they are secretly Open or Seeking — they are not","Information alone will not move the Uninterested","Do not get impatient","Resist the temptation to get defensive about Christianity"]
+  },
+  open: {
+    name:"Open", color:"#e09c2a", category:"Non-Christian",
+    pos:{x:31,y:29}, dir:"below", pose:"curious",
+    img:"Images/Sample 1.jpg",
+    quote:"Being open-minded is just part of who I am as a person.",
+    def:"A typically passive default state that non-Christians move into as they become more aware of Christianity.",
+    glance:["Three types: Open-Neutral, Open-Hesitant, Open-Curious","Desire happiness, financial prosperity, new experiences","Open ≠ Seeking","Minimal expectations from Christians"],
+    insights:[{t:"Information Over Conversation",b:"Prefer engaging with resources rather than person-to-person faith discussions."},{t:"Open-Mindedness as Core Value",b:"Strongly value inclusivity and diverse viewpoints."},{t:"Trauma & World Awareness",b:"Open-Hesitant identify trauma and mental health as significant barriers."},{t:"Focus: The Happy Life",b:"Priorities include financial prosperity, self-improvement, new experiences."}],
+    movement:["Debate pressure → moves toward Uninterested/Hostile","Perceived hypocrisy → decreased openness","Authentic friendships with Christians → toward Open-Curious or Seeking","Self-directed learning opportunity → positive movement"],
+    pray:["Ask Holy Spirit to reveal His activity in their lives","Pray their curiosity becomes spiritually directed","Request ability to be a trustworthy, unconditional friend"],
+    plan:["Create pressure-free discussion opportunities","Offer value before inviting engagement (music, art, films)","Identify joint community service opportunities","Share present-day faith examples and personal growth stories"],
+    cautions:["Open ≠ Seeking — do not treat them as seeking","Avoid entering debates","Acknowledge institutional failures genuinely","Show compassion for their burdens"]
+  },
+  seeking: {
+    name:"Seeking", color:"#4b5fc2", category:"Non-Christian",
+    pos:{x:54,y:26}, dir:"below", pose:"searching", hasBoat:true,
+    img:"Images/Sample 3.jpg",
+    quote:"I am still looking for answers!",
+    def:"Actively seeking answers about spiritual things. Exploring Christianity and other belief systems.",
+    glance:["Usually experienced positive Christian influence","Exploring multiple belief systems — Christianity may be one of many","Seek spirituality for personal reasons, not mere curiosity","Unlikely to be dechurched"],
+    insights:[{t:"How They Explore",b:"Typically through Christian friends or online search engines."},{t:"Sources of Truth",b:"Rely on logical reason, personal experience, and science."},{t:"Seeking Broadly",b:"Christianity is one option among many; do not perceive significant differences between religions."},{t:"Actively Seeking",b:"Consistently and actively search — not passively."}],
+    movement:["Lack of healthy Christian community keeps them here","Absence of safe spaces for exploration is a barrier","Typically transition to Professing or Growing when becoming Christians","Movement occurs within loving, trusted community contexts"],
+    pray:["Wisdom and patience — they seek truth on their own terms","That God leads them to reliable sources","That the Holy Spirit reveals gospel truth","For God to identify these people — they appear in unexpected places"],
+    plan:["Offer safe environments to hear their journey and questions","Provide books from people with similar spiritual exploration","Ask about experiences explainable only through God's intervention","Optimize online offerings for search engine discoverability"],
+    cautions:["They seek multiple worldviews — avoid controlling outcomes","Don't force faith decisions; trust Holy Spirit timing","Resist defensiveness when hearing negative Christian experiences","Engage in unexpected spiritual spaces (e.g., New Age conferences)"]
+  },
+  unclear: {
+    name:"Unclear", color:"#c2528b", category:"Special Region",
+    pos:{x:53,y:40}, dir:"left", pose:"scratching",
+    quote:"I'm not sure where I stand — somewhere between Christian and not.",
+    def:"A distinct region reflecting a different kind of spiritual identity marked by ambiguity, complexity, or evolving views. Not a stage of growth.",
+    glance:["Not a stage of spiritual growth — a distinct region","Do not place themselves as 'definitely Christian' or 'definitely not'","May have left church due to poor treatment","Still under construction — more research scheduled for 2026"],
+    insights:[{t:"Ambiguous Identity",b:"May identify with Christianity's values without the label."},{t:"Withholding Judgment",b:"Waiting for more evidence or clarity before committing."},{t:"Under Construction",b:"This region is still under active research — approach with humility."}],
+    movement:["May move toward Professing if they reclaim Christian identity","May move toward Uninterested or Seeking depending on exploration","More research needed on movement patterns"],
+    pray:["Ask God for clarity and discernment for them","Pray they experience God's love beyond institutional Christianity"],
+    plan:["Clarify their actual position through gentle conversation","Avoid assuming they are either fully Christian or non-Christian"],
+    cautions:["Do not force a label on them","This region is still under active research — approach with humility","Be patient with their complexity and ambiguity"]
+  },
+  dual: {
+    name:"Dual", color:"#bc1e51", category:"Special Region",
+    pos:{x:49,y:47}, dir:"left", pose:"juggling",
+    quote:"I believe in God, but I also practice other spiritual traditions.",
+    def:"Identify both with Christianity and another world religion and/or a non-religious belief system.",
+    glance:["Identify as Christian but NOT exclusively","Pray independently without attending church","More active in privately practicing another religion","Attend church to become better, more moral people"],
+    insights:[{t:"Being Good",b:"View Christianity as assistance toward moral living and respect for others."},{t:"Exclusivity in Identity",b:"Genuinely identify as Christian but do not exclusively — this is the key differentiator."},{t:"No Christian Community",b:"Lacking healthy Christian communities for exploration and questions."}],
+    movement:["Absence of safe spaces keeps them here","Typically transition to Professing or Growing when identifying exclusively as Christian","Movement toward Professing occurs within loving, trusted community contexts"],
+    pray:["That God opens their eyes to the exclusive gospel","For His perspective on their contradictory beliefs","That they're overwhelmed by the gospel's wonder and Jesus's singular divinity"],
+    plan:["Clarify their actual stage through conversation","Avoid treating them as Growing Christians when they're Dual","Help them understand Christ's exclusivity and universal salvation desire"],
+    cautions:["Don't judge their misunderstanding of gospel exclusivity","Be patient — information does not equal belief","Address the 'loving God wouldn't exclude anyone' misconception"]
+  },
+  professing: {
+    name:"Professing", color:"#6895c9", category:"Christian (nominal)",
+    pos:{x:54,y:67}, dir:"above", pose:"hands_folded",
+    quote:"I've identified as a Christian for as long as I can remember, but I haven't been pursuing a closer connection to God recently.",
+    def:"Professing to be a Christian, but little or no desire to grow spiritually.",
+    glance:["Four types: Cultural, Moralist, Non-Practicing, Guarded","Identify as Christian but not actively involved in church","Desire to be good and do what is right","Most have never shared their faith or discipled others"],
+    insights:[{t:"Being Good",b:"Christianity viewed as a help to being good, moral, respectful."},{t:"Evangelism & Discipleship",b:"Vast majority have never done either; most believe evangelism is wrong."},{t:"Identity over Belief",b:"'I have always been a Christian' is common — Christianity is identity rather than practice."},{t:"Currently Stressed",b:"Stress is the most common emotion across all Professing subgroups."}],
+    movement:["Very likely to stay long-term due to apathy unless something shakes them","Move to Growing through Bible reading, prayer, trials, meaningful community","Many previously in Growing returned to Professing after negative life circumstances","Move to Unclear when questioning faith due to trials or encountering alternative worldviews"],
+    pray:["Ask God to motivate them toward following Jesus, not merely identifying","Ask Holy Spirit to help them see following Jesus is a response to His love","Recognize some slipped into this status unintentionally — ask God to make you the nudge"],
+    plan:["Empathetically ask: 'What are the main reasons you identify as a Christian?'","Discover why they lack desire to grow (boredom, wrong view of God, personal issues)","Create barrier-specific strategies"],
+    cautions:["Similar language may mask different meanings — many grew up knowing 'right words'","Emphasize grace and faith over works","Your approachability determines whether they see you as helpful or threatening"]
+  },
+  growing: {
+    name:"Growing", color:"#60d3aa", category:"Christian",
+    pos:{x:73,y:27}, dir:"below", pose:"reading",
+    quote:"I am now working on my relationship with Jesus, getting to know him better.",
+    def:"Actively, willingly practicing their faith and experiencing inward heart change.",
+    glance:["Three types: Intentional, Struggling, Nurtured","Faith is very personal","May not attend church regularly","Not currently doing evangelism or discipleship"],
+    insights:[{t:"Pursuing Jesus",b:"Actively work to improve their relationship with Jesus, even when describing it as distant."},{t:"View on Evangelism",b:"Receptive to relational evangelism; nearly universally opposed to direct evangelism."},{t:"Faith is Personal",b:"Tendency toward practicing faith alone or with other Christians."},{t:"Prayer vs. Bible-Reading",b:"Growing people pray independently but don't all read the Bible."}],
+    movement:["Wrong friends or church leader failures can move back toward Professing","Trials may cause movement prompted by doubt or pain","Most move toward Grounded through Christian community involvement","Some move directly to Engaged by trying evangelism or discipleship"],
+    pray:["Thank God for growing relationships with Him","Pray for resilience and trust in God's character during spiritual warfare","Pray for safe, trustworthy community to draw them closer to God"],
+    plan:["Provide solid foundation in God's character and faith basics","Help understand Spirit-filled life and reliance on God","Give appropriate challenges at right times","Connect people to healthy believer communities"],
+    cautions:["Early accelerated growth may stem from wrong motives (legalism, people-pleasing)","Listen empathetically to doubts without defensiveness","Don't assume visible growth means comfort with community groups"]
+  },
+  grounded: {
+    name:"Grounded", color:"#2f377f", category:"Christian",
+    pos:{x:84,y:49}, dir:"left", pose:"standing",
+    quote:"Living in today's society is not easy, but my faith keeps me grounded and secure.",
+    def:"Motivated to follow Jesus and want to grow, yet experience barriers in practicing evangelism and discipleship as a lifestyle.",
+    glance:["Three desires: strong relationship with God, grow in community, serve others","Unlikely to do evangelism — see it as forcing beliefs on others","Don't disciple others because they don't feel ready","May have formerly been in Engaged stage but intentionally stopped"],
+    insights:[{t:"Definition of Maturity",b:"Define spiritual maturity as growing spiritually and serving others."},{t:"View of Evangelism",b:"Unlikely to evangelize because they see it as forcing beliefs on others."},{t:"Formerly Engaged",b:"Some were formerly in the Engaged stage but have stopped for various reasons."}],
+    movement:["Danger — Grounded can become an end state; stop growing toward Multiplying","Sin and Trials can move back to Professing or Growing","Can move to Engaged through increased church involvement and clear opportunities","Occasionally moves back to Growing from renewed passion or love for Jesus"],
+    pray:["Holy Spirit gives desire to participate in the Great Commission","Many times a defining experience moves these people; pray for such an experience","Pray they take the step of faith — for many this means going back to a painful place"],
+    plan:["Distinguish between motivation and skill as the source of their lack of involvement","Help them understand God's heart for the Great Commission","Invite them to do life with you so they can see evangelism as a way of life"],
+    cautions:["May feel intimidated or judged by people who do evangelism","Avoid shaming and manipulation to get them involved","Building trust with the dechurched is a long process"]
+  },
+  engaged: {
+    name:"Engaged", color:"#4f8eb5", category:"Christian",
+    pos:{x:73,y:50}, dir:"above", pose:"reaching",
+    quote:"I helped someone else know Jesus a little better.",
+    def:"Has done evangelism or discipleship within the past year.",
+    glance:["Nearly all have done evangelism and most continue","Typically had positive outcomes from evangelism","Started sharing faith after learning only the basics","~20% are dechurched"],
+    insights:[{t:"Evangelism Style",b:"More free-flowing, entirely informal and usually spontaneous."},{t:"Positive Experience",b:"Have typically had at least some positive experience with evangelism."},{t:"Started Early",b:"Typically started after learning only the basics; shared first with family or friends."}],
+    movement:["Lack of fruit or interest can slip back into Grounded","Busyness or Trials may move back to Grounded","Movement to Multiplying needs at least one disciple who discipled someone else","Sustainability is a challenge in places without many Christians"],
+    pray:["That their lives be lived out of deep motivation to love Jesus","That they grow in sensitivity to the Holy Spirit","That God would encourage them to continue what only a small percentage of believers do"],
+    plan:["Ask about their community and discern ways to help","Think about ways to encourage them with others in the Great Commission","Examine why they are not in Multiplying — motivation? Skill? Opportunity?"],
+    cautions:["Beware motivating them to please you rather than love for Jesus","Do not use their steps of faith as public stories celebrating what they do","Many started with minimal training — share your own evangelism experiences"]
+  },
+  multiplying: {
+    name:"Multiplying", color:"#3abfb1", category:"Christian",
+    pos:{x:69,y:50}, dir:"above", pose:"celebrating",
+    quote:"My goal is to become more like Christ and help others become more like Christ.",
+    def:"Highly engaged in the Great Commission, making new disciples who make disciples.",
+    glance:["Movement occurs when at least one disciple has discipled someone else","Regularly involved in various spiritual activities as both leaders and participants","Actively share faith both relationally and directly","Multiplying is not permanent — requires ongoing engagement"],
+    insights:[{t:"Spiritual Maturity",b:"Believe Christian maturity encompasses wide-ranging disciplines; involved as both participants and leaders."},{t:"Motivation",b:"Desire to be used by God in their church and community."},{t:"Evangelism",b:"Actively share faith in various settings, both relationally and directly with unfamiliar people."}],
+    movement:["May transition to Grounded if evangelism and discipleship cease","Multiplying is not necessarily permanent — ongoing requirement to remain here","Continued evangelism and discipleship are necessary to stay in this stage"],
+    pray:["Pray for these individuals by name — they face spiritual opposition","Thank God for them; pray for perseverance","Pray they make the most of opportunities to share how Jesus meets them"],
+    plan:["Introduce variance in activities (international missions) to refresh engagement","Help them consider circles of influence and intentional expansion","Link them with similar-minded believers; create partnership opportunities"],
+    cautions:["May judge those not multiplying — address with compassion","Emphasize spiritual depth alongside activity metrics","Celebrate non-numerical growth and intimacy with Jesus"]
+  }
+};
+
+// ── TALK Q&A DATA ──
+const TALK = {
+  hostile: [
+    { q: "What comes to mind when you hear 'Christianity'?", a: "Honestly? Pain. History. Hypocrisy. I've seen what religion does to people — the harm it causes. It's not something I can just brush aside.",
+      follow: [
+        { q: "Was there a specific experience that shaped that view?", a: "Yeah. People I trusted used faith as a weapon. Once you've seen that, you can't unsee it. It rewires how you hear everything." },
+        { q: "Is there anything about Christianity you can respect?", a: "The idea of loving your neighbor — genuinely. I just rarely see it actually practiced. The gap between the teaching and the behavior is the problem." }
+      ]
+    },
+    { q: "Has anyone ever changed your mind about faith?", a: "Not really. The more someone pushes, the further back I go. If anything, bad interactions have hardened me.",
+      follow: [
+        { q: "What would a different kind of interaction look like?", a: "Someone who's just... present. Not trying to win. Not with an agenda underneath everything. Just honestly curious about me." },
+        { q: "Do you think you'll always feel this way?", a: "I don't know. Maybe. I try to stay honest with myself about it. I don't want to be permanently closed. But I'm not pretending I'm open right now." }
+      ]
+    },
+    { q: "What would make you open to a real conversation?", a: "Stop trying to convert me. Just be human with me. Show me you actually care without an agenda. That's it — just that.",
+      follow: [
+        { q: "Has anyone ever come close to that?", a: "Once or twice. Those people I actually respect. They never pushed. They just showed up consistently and treated me like a person." },
+        { q: "What's your biggest frustration with how Christians approach you?", a: "The pretending. Like they're my friend, but you can tell there's a goal underneath. I'd rather have honest disagreement than false warmth." }
+      ]
+    }
+  ],
+  unaware: [
+    { q: "What do you believe happens after we die?", a: "I am not sure... In my family we speak of ancestors watching over us. I have not thought deeply about this. Why do you ask?",
+      follow: [
+        { q: "What do your traditions say about the meaning of life?", a: "We believe in honoring family, living with integrity, and leaving something good behind. That is enough, I think. Or maybe I am still learning." },
+        { q: "Does thinking about death make you curious or anxious?", a: "A little of both, honestly. It is not something we talk about openly. But when I am alone sometimes I wonder about it." }
+      ]
+    },
+    { q: "Have you heard of Jesus before?", a: "I have heard this name. He is from the Bible? I see Christians sometimes, but I do not know much about what they believe.",
+      follow: [
+        { q: "Would you be open to learning more about him?", a: "I think so. I am curious about many things. If someone explained it clearly, without making me feel strange for not knowing — yes." },
+        { q: "What does your community believe about spiritual things?", a: "We honor our ancestors. We observe certain days. We believe there is a power above us, though we do not have a single name for it." }
+      ]
+    },
+    { q: "What matters most to you in life?", a: "Family, of course. Doing honest work. Treating others as I want to be treated. These things I know to be true.",
+      follow: [
+        { q: "How do you decide what's right and wrong?", a: "From how I was raised, mostly. And from watching what happens when people act badly — the consequences. Experience teaches a lot." },
+        { q: "Do you ever feel like there's something more beyond this life?", a: "Sometimes. When something beautiful happens — a birth, a sunset, something unexpected — I feel like there must be. I just do not know what." }
+      ]
+    }
+  ],
+  uninterested: [
+    { q: "What do you think about religion in general?", a: "It's fine for people who need it. I just don't. My life feels full. I'm happy. I don't see what religion would add.",
+      follow: [
+        { q: "Was there ever a time you were more curious about it?", a: "Maybe when I was younger. There was a period I went to church with a friend. It was fine, but it didn't stick. Nothing really called to me." },
+        { q: "Do you know many Christians personally?", a: "Yeah, some. They're good people mostly. It just doesn't make me want to join. I appreciate what it does for them. Just not my thing." }
+      ]
+    },
+    { q: "Any interest in exploring faith sometime?", a: "Not really. I've already thought it through. It's not a rejection out of anger — it's just a decision. I'm at peace with it.",
+      follow: [
+        { q: "Do you think that could ever change?", a: "Maybe if something big happened — loss, a crisis. People do tend to reach for something then. I'm not immune to that. I just don't need it now." },
+        { q: "What does a meaningful life look like to you?", a: "Good relationships. Work that matters. Some adventure. Helping people when I can. I don't need a cosmic framework for that. It feels complete." }
+      ]
+    },
+    { q: "What would it take to spark your curiosity?", a: "Honestly? I'd need to see it genuinely change someone I already trust and respect. Not a stranger. Someone I know well.",
+      follow: [
+        { q: "Who in your life has influenced you most?", a: "My dad. He's not religious at all, actually. He just modeled integrity and hard work. That's shaped how I see everything." },
+        { q: "What kind of change in a person would actually impress you?", a: "Real change. Not just becoming nicer or more optimistic. Something deeper — like overcoming something they truly couldn't have on their own." }
+      ]
+    }
+  ],
+  open: [
+    { q: "What makes you open-minded about spirituality?", a: "I just think there's probably something bigger out there. I don't want to close any doors before I've looked through them.",
+      follow: [
+        { q: "Have you had any experiences that felt spiritual?", a: "A few times — moments where I felt weirdly connected to something larger than myself. I don't have language for it yet. But something was there." },
+        { q: "What's one spiritual question you'd most want answered?", a: "Why suffering exists. If there's a God who's good, that's the one I can't get past. I'd want a real answer, not a platitude." }
+      ]
+    },
+    { q: "Would you ever explore Christianity specifically?", a: "Maybe. I just really don't want anyone pressuring me. Let me come to things at my own pace and I'll actually consider it.",
+      follow: [
+        { q: "What would pressure look like — how would you know?", a: "When the friendship feels conditional. Like they're nice because they want something from me. That kills my interest immediately." },
+        { q: "Are there parts of Christianity that appeal to you?", a: "The community aspect, honestly. And some of the teachings — grace, forgiveness, loving enemies. Those feel genuinely radical in a good way." }
+      ]
+    },
+    { q: "What are you looking for in life right now?", a: "Happiness, mostly. New experiences. Growing as a person. If faith contributes to that genuinely, I'm curious.",
+      follow: [
+        { q: "How's the search for happiness going so far?", a: "Pretty well, actually. But there are moments where I wonder if I'm missing something. Not often. Just occasionally." },
+        { q: "What's one thing that feels like it's still missing?", a: "Depth, maybe. A sense of something that lasts. Experiences are great but they pass. I'm starting to want something more rooted." }
+      ]
+    }
+  ],
+  seeking: [
+    { q: "What are you searching for, really?", a: "Truth. Something that actually holds up when you examine it — not just emotionally but intellectually. I want something real.",
+      follow: [
+        { q: "What's the closest you've come to finding it?", a: "A few moments, honestly. Reading certain things. A conversation that went somewhere unexpected. But nothing that's fully landed yet." },
+        { q: "What makes you distrust things that claim to be true?", a: "History. How often certainty has been weaponized. I want to believe something but I need it to survive scrutiny, not just feel good." }
+      ]
+    },
+    { q: "Are you looking at Christianity specifically?", a: "It's one of many things I'm exploring. Buddhism, Stoicism, others. I'm not ruling anything out. Christianity has some interesting things.",
+      follow: [
+        { q: "What specifically draws you to Christianity among the rest?", a: "The resurrection claim, honestly. If it's true, it changes everything. I'm trying to figure out if it's actually defensible historically." },
+        { q: "Have you talked to many Christians about their actual faith?", a: "A few. Some gave me real answers. Others seemed more interested in recruiting than exploring. The first kind are worth more conversations." }
+      ]
+    },
+    { q: "What would make you commit to a faith?", a: "It would have to work on both levels — make sense intellectually AND feel personally real. Both matter equally to me.",
+      follow: [
+        { q: "What has your own personal experience told you so far?", a: "That there's something. I've had moments I can't fully explain rationally. I take those seriously. They're data too, not just feelings." },
+        { q: "Are you afraid of committing and being wrong?", a: "Yes. Genuinely. I've seen how bad ideology can corrupt people. I want to be sure. I'd rather search longer than commit to something false." }
+      ]
+    }
+  ],
+  unclear: [
+    { q: "How would you describe where you are spiritually?", a: "Complicated. I believe some of it, but not all. I've been hurt by the institution. The label doesn't quite fit anymore.",
+      follow: [
+        { q: "What part of it do you most still believe in?", a: "That there's a God who actually cares. That part I can't shake. The rest — the institution, the politics, the packaging — I've let go of." },
+        { q: "What would it take to move toward more clarity?", a: "Time. And honest community — if that even exists. People who can sit with questions instead of rushing to fix them." }
+      ]
+    },
+    { q: "Do you consider yourself a Christian?", a: "I honestly don't know. Sometimes yes, sometimes no. I believe in God but I'm not sure about everything else around it.",
+      follow: [
+        { q: "What would help you land somewhere definite?", a: "Probably a community where I could ask the real questions without feeling judged. And maybe someone else who'd been where I am." },
+        { q: "Do you miss the certainty you may have had before?", a: "Sometimes, yeah. It was simpler. But I'm not sure going back is possible or even honest. I know too much now. I have to sit with that." }
+      ]
+    },
+    { q: "What's holding you back from clarity?", a: "Real wounds. And real questions nobody seems willing to answer honestly. I need space, not pressure.",
+      follow: [
+        { q: "Is there a wound you feel safe enough to name?", a: "Someone in church leadership who abused trust. It didn't just hurt me — it made me question everything I believed was true about the community." },
+        { q: "What would an honest answer from someone actually look like?", a: "Admitting they don't know. Sitting with me in the uncertainty instead of defending the institution. That would mean more than any argument." }
+      ]
+    }
+  ],
+  dual: [
+    { q: "How do you balance different spiritual practices?", a: "I don't see a conflict, honestly. God is God. Whether I pray at church or light incense at home, I'm reaching toward something bigger.",
+      follow: [
+        { q: "Do the practices ever feel like they pull in different directions?", a: "Occasionally. But I think that tension is good. It keeps me humble. No single tradition has all the answers, right?" },
+        { q: "Has anyone ever challenged you on combining them?", a: "Christians, mostly. They say it's contradictory. But I think they're more concerned with category purity than with my actual relationship with God." }
+      ]
+    },
+    { q: "Do you consider yourself a Christian?", a: "Yes, definitely. But not exclusively. I think God is loving enough to accept many paths. I don't see why that's a problem.",
+      follow: [
+        { q: "Have you ever read what Christianity actually teaches about exclusivity?", a: "Some of it. I understand the claims. I just find them too narrow. A God that big shouldn't have such a small door." },
+        { q: "Does the idea of one path bother you philosophically?", a: "Yeah, it does. It feels like it contradicts the idea of a loving God. I can't reconcile those two things easily." }
+      ]
+    },
+    { q: "What does Christianity mean to you personally?", a: "Being good. Helping people. Living morally. Church helps me stay on track. That's what matters — the living of it.",
+      follow: [
+        { q: "What's your relationship with the Bible like?", a: "I read it sometimes. Some of it I take literally, some I read more symbolically. I pick what resonates and set aside what doesn't." },
+        { q: "How do you decide which teachings to follow?", a: "Whatever aligns with love and compassion, honestly. That's my filter. If a teaching leads to judgment or exclusion, I set it aside." }
+      ]
+    }
+  ],
+  professing: [
+    { q: "How long have you been a Christian?", a: "My whole life. I was raised in the church. It's just who I am — it's not something I really think about, it's just there.",
+      follow: [
+        { q: "Do you ever question whether you actually believe it?", a: "Honestly? Not often. It's more like... I've never really tested it. It's just the water I swim in. That thought is a little uncomfortable." },
+        { q: "What's your favorite memory from your faith growing up?", a: "Easter services, actually. Something about them felt significant even as a kid. I haven't felt that way about church in a long time." }
+      ]
+    },
+    { q: "How is your spiritual life going right now?", a: "Quiet, if I'm honest. I believe, but I haven't really been... engaging much. Life gets busy. It's been easy to let it sit.",
+      follow: [
+        { q: "Does the quiet bother you, or does it feel okay?", a: "Both, weirdly. Mostly okay. But every once in a while something pokes at me and I wonder if I'm missing something real." },
+        { q: "What would re-engaging look like for you?", a: "I don't know. Maybe just showing up again. Connecting with people. I don't think I need a dramatic moment — just a starting point." }
+      ]
+    },
+    { q: "What do you think would help you grow spiritually?", a: "I don't know — maybe something that shook me up a bit. Right now everything feels fine. Maybe that's the problem.",
+      follow: [
+        { q: "What would have to happen to make you take faith more seriously?", a: "A crisis, maybe. That's a scary thing to say. But I notice I'm most real about faith when things are hard. That's revealing, I guess." },
+        { q: "Is there someone in your life who models what you'd want?", a: "There's one person — a coworker. Their faith seems alive in a way mine doesn't. I don't know what they have that I don't, but it's noticeable." }
+      ]
+    }
+  ],
+  growing: [
+    { q: "How has your faith changed recently?", a: "I've been praying more — actually talking, not just going through motions. It feels different now. More alive.",
+      follow: [
+        { q: "What triggered that shift for you?", a: "A really hard season. I ran out of other options and started being honest with God about it. Something opened up that hadn't before." },
+        { q: "How does it feel different from before?", a: "Before it felt like duty. Now it feels like relationship. I actually want to talk to God — not because I'm supposed to." }
+      ]
+    },
+    { q: "What's challenging about your faith right now?", a: "Community. I grow really well on my own but I'm honestly not sure about getting plugged into a group. It feels vulnerable.",
+      follow: [
+        { q: "What makes community feel risky?", a: "Being known. If I show up and let people see me, they might see the parts I'm not proud of. That's uncomfortable even in a church setting." },
+        { q: "Have you had a bad community experience before?", a: "Yeah. A small group that felt more like performance than real connection. People said the right things but nobody was actually honest." }
+      ]
+    },
+    { q: "What excites you about your spiritual journey?", a: "Discovering the Bible actually speaks to what I'm going through right now. It's not abstract — it's specific. That's wild to me.",
+      follow: [
+        { q: "What passage or story has meant the most to you?", a: "The prodigal son. Something about the father running toward the son — not waiting — keeps hitting me differently every time I read it." },
+        { q: "Are you reading the Bible alone or with others?", a: "Mostly alone right now. I'd want to do it with someone eventually. Talking through it would probably open things up I'm missing on my own." }
+      ]
+    }
+  ],
+  grounded: [
+    { q: "What keeps you grounded in your faith?", a: "Community. Prayer. Knowing who I am in Christ even when life is hard. That foundation is real — I've tested it.",
+      follow: [
+        { q: "Was there a moment when you really tested that foundation?", a: "A few years ago — a loss that undid me. My faith didn't answer all my questions but it held me when I couldn't hold myself. That mattered." },
+        { q: "What does your prayer life look like right now?", a: "Consistent. Morning mostly. Not always long — sometimes just a few honest sentences. But I show up. That rhythm keeps me anchored." }
+      ]
+    },
+    { q: "Why don't you share your faith more often?", a: "I don't want to force it on anyone. Faith is personal. I'd rather show it through how I live than pressure someone.",
+      follow: [
+        { q: "Have you ever shared your faith and had it go well?", a: "Once, years ago. A coworker asked me directly. That conversation was natural and real. It worked because they came to me, not the other way around." },
+        { q: "What would sharing faith look like without it feeling pushy?", a: "Just being honest when people ask. Not volunteering it constantly but not hiding it either. Living it loudly enough that it raises questions." }
+      ]
+    },
+    { q: "What would push you to take more risks in faith?", a: "Honestly? I'd want someone to go first with me. Show me what it looks like in practice. I think I'm ready, I just need that.",
+      follow: [
+        { q: "Who would that person be for you?", a: "Someone I already trust. Not a stranger. If a close friend invited me into something real, I'd go. The relationship has to come first." },
+        { q: "What's the risk that feels biggest to you?", a: "Rejection. Saying something honest about my faith and having it cost me a friendship or a relationship at work. That fear is real for me." }
+      ]
+    }
+  ],
+  engaged: [
+    { q: "What's it like to share your faith with others?", a: "Scary at first, honestly. But the conversations that happen — real ones — are incredible. It's absolutely worth it.",
+      follow: [
+        { q: "What was the best faith conversation you've ever had?", a: "With my brother. We talked for four hours. He wasn't ready to commit, but something shifted. He texted me a week later asking more questions." },
+        { q: "How do you handle it when the conversation doesn't go well?", a: "I try to remember it's not my job to change anyone. I plant seeds. I stay humble. But it still stings sometimes, I won't pretend otherwise." }
+      ]
+    },
+    { q: "How did you start sharing your faith?", a: "Just with people I already knew. No big plan. I just started being honest about what God was doing in my life. Simple as that.",
+      follow: [
+        { q: "Was there a moment you almost didn't share?", a: "Every time, honestly. There's always a voice saying 'not now, not here.' I've learned to push through it. The moment I open my mouth, it gets easier." },
+        { q: "How did that first person respond?", a: "Better than I expected. They were curious. I think people are hungrier for real conversations than we assume. We just have to start them." }
+      ]
+    },
+    { q: "What's the hardest part of staying consistent?", a: "Life gets busy. I have to stay intentional or I drift back into just... existing. It takes real effort to maintain.",
+      follow: [
+        { q: "What strategies help you stay intentional?", a: "I keep a short list of people I'm praying for specifically. That keeps them in front of me. And I check in with a friend who holds me accountable." },
+        { q: "How do you encourage yourself when you drift?", a: "I look back at the conversations that mattered. That rekindles it. And I confess the drift honestly — to God, and sometimes to a friend." }
+      ]
+    }
+  ],
+  multiplying: [
+    { q: "What drives you to keep making disciples?", a: "I've watched people's lives genuinely change. How could I not want that for everyone around me? It's not a duty — it's love.",
+      follow: [
+        { q: "Who was the first person you saw genuinely transformed?", a: "A guy in a small group I led. Came in skeptical, barely talking. Two years later he was leading his own group. Watching that happen — nothing like it." },
+        { q: "How do you love people who resist or push back?", a: "I try to stay curious about them rather than frustrated. Resistance usually means something important is underneath it. I want to know what that is." }
+      ]
+    },
+    { q: "How do you keep from burning out?", a: "It has to come from love, not obligation. The moment it becomes duty or performance, you're already in trouble. I stay close to Jesus.",
+      follow: [
+        { q: "What warning signs do you watch for in yourself?", a: "When I start measuring success numerically. When I stop enjoying the people and just focus on outcomes. That's my signal to slow down and pray." },
+        { q: "What does your personal rhythm with Jesus look like?", a: "Mornings mostly. Bible, prayer, stillness. I protect that aggressively. If that's healthy, everything else tends to follow. If it's not, everything suffers." }
+      ]
+    },
+    { q: "What's been your greatest joy in this journey?", a: "Watching someone I discipled go and disciple someone else. That's multiplication. That's what the whole thing is about.",
+      follow: [
+        { q: "What did that moment feel like when you first saw it happen?", a: "Like standing back and watching something you were only partially responsible for. That's the point — it's supposed to outgrow you. That felt right." },
+        { q: "Where do you feel called to multiply next?", a: "Honestly, I'm asking that question a lot right now. There are new circles I haven't entered yet. I think the next chapter is outside my comfort zone." }
+      ]
+    }
+  ]
+};
+
+// ── SPRITE SVG BUILDER ──
+function spriteArms(pose) {
+  const a = {
+    defensive:    `<line class="arm-l" x1="20" y1="22" x2="10" y2="19" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="30" y2="19" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    confused:     `<line class="arm-l" x1="20" y1="22" x2="8"  y2="28" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="32" y2="15" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    relaxed:      `<line class="arm-l" x1="20" y1="22" x2="9"  y2="31" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="31" y2="31" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    curious:      `<line class="arm-l" x1="20" y1="22" x2="8"  y2="17" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="32" y2="27" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    searching:    `<line class="arm-l" x1="20" y1="22" x2="7"  y2="15" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="33" y2="20" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    scratching:   `<line class="arm-l" x1="20" y1="22" x2="9"  y2="29" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="31" y2="13" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    juggling:     `<line class="arm-l" x1="20" y1="22" x2="7"  y2="14" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="33" y2="14" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    hands_folded: `<line class="arm-l" x1="20" y1="22" x2="12" y2="29" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="28" y2="29" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    reading:      `<line class="arm-l" x1="20" y1="22" x2="8"  y2="27" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="32" y2="27" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    standing:     `<line class="arm-l" x1="20" y1="22" x2="8"  y2="28" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="32" y2="28" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    reaching:     `<line class="arm-l" x1="20" y1="22" x2="7"  y2="15" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="30" y2="29" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    celebrating:  `<line class="arm-l" x1="20" y1="22" x2="6"  y2="11" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r" x1="20" y1="22" x2="34" y2="11" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`
+  };
+  return a[pose] || a.standing;
+}
+
+function spriteMouth(pose) {
+  const m = {
+    defensive:    `<path d="M17 12 Q20 10.5 23 12" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    confused:     `<path d="M17 12 Q20 13.8 23 12" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    relaxed:      `<line x1="17" y1="12" x2="23" y2="12" stroke="#333" stroke-width="1" stroke-linecap="round"/>`,
+    curious:      `<path d="M17 11.5 Q20 13.5 23 11.5" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    searching:    `<path d="M17 11.5 Q20 13.5 23 11.5" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    scratching:   `<path d="M17 12 Q20 13.8 23 12" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    juggling:     `<line x1="17" y1="11.5" x2="23" y2="11.5" stroke="#333" stroke-width="1" stroke-linecap="round"/>`,
+    hands_folded: `<path d="M17 11.5 Q20 13 23 11.5" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    reading:      `<path d="M17 11.5 Q20 13.5 23 11.5" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    standing:     `<path d="M17 11.5 Q20 13.5 23 11.5" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    reaching:     `<path d="M17 11.5 Q20 13.5 23 11.5" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+    celebrating:  `<path d="M16 11 Q20 15.5 24 11" stroke="#333" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+  };
+  return m[pose] || m.standing;
+}
+
+// Boat arms — same poses as spriteArms but centered at x=27 instead of x=20
+function boatArms(pose) {
+  const a = {
+    defensive:    `<line class="arm-l boat-arm" x1="27" y1="22" x2="17" y2="19" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="37" y2="19" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    confused:     `<line class="arm-l boat-arm" x1="27" y1="22" x2="15" y2="28" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="39" y2="15" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    relaxed:      `<line class="arm-l boat-arm" x1="27" y1="22" x2="16" y2="31" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="38" y2="31" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    curious:      `<line class="arm-l boat-arm" x1="27" y1="22" x2="15" y2="17" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="39" y2="27" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    searching:    `<line class="arm-l boat-arm" x1="27" y1="22" x2="14" y2="15" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="40" y2="20" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    scratching:   `<line class="arm-l boat-arm" x1="27" y1="22" x2="16" y2="29" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="38" y2="13" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`,
+    celebrating:  `<line class="arm-l boat-arm" x1="27" y1="22" x2="13" y2="11" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/><line class="arm-r boat-arm" x1="27" y1="22" x2="41" y2="11" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>`
+  };
+  return a[pose] || a.relaxed;
+}
+
+function buildSprite(key) {
+  const s = STAGES[key];
+
+  if (s.hasBoat) {
+    return `<svg class="sprite-figure" viewBox="0 0 54 72" xmlns="http://www.w3.org/2000/svg" style="width:52px;height:72px">
+      <!-- Water shimmer -->
+      <ellipse cx="27" cy="67" rx="20" ry="3.5" fill="rgba(130,190,220,0.35)"/>
+      <!-- Boat hull -->
+      <path d="M5 50 Q7 64 27 66 Q47 64 49 50 Z" fill="#c8a86a" stroke="#8B5e2a" stroke-width="1.5"/>
+      <!-- Boat interior -->
+      <path d="M9 50 Q11 61 27 63 Q43 61 45 50 Z" fill="#e8d4a0"/>
+      <!-- Boat rim -->
+      <line x1="5" y1="50" x2="49" y2="50" stroke="#8B5e2a" stroke-width="2" stroke-linecap="round"/>
+      <!-- Oar -->
+      <line x1="11" y1="49" x2="2" y2="58" stroke="#a07040" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="2" cy="59" rx="3" ry="1.5" fill="#a07040" transform="rotate(-40 2 59)"/>
+      <!-- Body (seated — shorter) -->
+      <line x1="27" y1="17" x2="27" y2="44" stroke="#5a3a2a" stroke-width="3" stroke-linecap="round"/>
+      <!-- Arms -->
+      ${boatArms(s.pose)}
+      <!-- Legs tucked in boat -->
+      <line x1="27" y1="44" x2="19" y2="51" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="27" y1="44" x2="35" y2="51" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Head -->
+      <circle cx="27" cy="9" r="8.5" fill="${s.color}" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+      <circle cx="24" cy="8" r="1.3" fill="white"/>
+      <circle cx="30" cy="8" r="1.3" fill="white"/>
+      <circle cx="24.5" cy="8.4" r="0.65" fill="#222"/>
+      <circle cx="30.5" cy="8.4" r="0.65" fill="#222"/>
+      <path d="M24 12 Q27 13.8 30 12" stroke="#333" stroke-width="1" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  return `<svg class="sprite-figure" viewBox="0 0 40 56" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="20" cy="54" rx="7" ry="2" fill="rgba(0,0,0,0.12)"/>
+    <line x1="20" y1="36" x2="14" y2="52" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="20" y1="36" x2="26" y2="52" stroke="#5a3a2a" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="20" y1="16" x2="20" y2="36" stroke="#5a3a2a" stroke-width="3" stroke-linecap="round"/>
+    ${spriteArms(s.pose)}
+    <circle cx="20" cy="9" r="8.5" fill="${s.color}" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+    <circle cx="17" cy="8" r="1.3" fill="white"/>
+    <circle cx="23" cy="8" r="1.3" fill="white"/>
+    <circle cx="17.5" cy="8.4" r="0.65" fill="#222"/>
+    <circle cx="23.5" cy="8.4" r="0.65" fill="#222"/>
+    ${spriteMouth(s.pose)}
+  </svg>`;
+}
+
+// ── RENDER SPRITES ──
+const layer = document.getElementById('spritesLayer');
+Object.keys(STAGES).forEach(key => {
+  const s = STAGES[key];
+  const shortQ = s.quote.length > 68 ? s.quote.slice(0,65)+'…' : s.quote;
+
+  const el = document.createElement('div');
+  el.className = 'sprite-wrapper';
+  el.dataset.dir = s.dir;
+  el.style.left = s.pos.x + '%';
+  el.style.top  = s.pos.y + '%';
+
+  el.innerHTML = `
+    <div class="thought-bubble">
+      <div class="bubble-stage-label" style="color:${s.color}">${s.name}</div>
+      <div class="bubble-quote">"${shortQ}"</div>
+      <div class="bubble-cta">Click to explore ↗</div>
+    </div>
+    ${buildSprite(key)}
+    <div class="sprite-pulse" style="background:${s.color}"></div>
+  `;
+
+  el.addEventListener('click', () => openPanel(key));
+  layer.appendChild(el);
+});
+
+// ── PANEL ──
+const panel   = document.getElementById('sidePanel');
+const overlay = document.getElementById('overlay');
+
+function openPanel(key) {
+  const s = STAGES[key];
+  document.getElementById('panelCategory').textContent = s.category;
+  document.getElementById('panelTitle').textContent    = s.name;
+  document.getElementById('panelDef').textContent      = s.def;
+  document.getElementById('panelHeader').style.background = s.color;
+  document.getElementById('panelContent').style.setProperty('--sc', s.color);
+
+  document.getElementById('tab-overview').innerHTML = `
+    ${s.img ? `<img class="overview-img" src="${s.img}" alt="${s.name}">` : `<div class="overview-img-placeholder"></div>`}
+    <blockquote class="panel-quote">"${s.quote}"</blockquote>
+    <div class="glance-tags">${s.glance.map(g=>`<span class="glance-tag">${g}</span>`).join('')}</div>
+  `;
+
+  document.getElementById('tab-movement').innerHTML = `
+    <div class="section-title">Movement Patterns</div>
+    <ul class="bullet-list">${s.movement.map(m=>`<li>${m}</li>`).join('')}</ul>
+  `;
+
+  document.getElementById('tab-engage').innerHTML = `
+    <div class="engage-block">
+      <div class="engage-head"><div class="engage-icon">🙏</div>Pause &amp; Pray</div>
+      <ul class="bullet-list">${s.pray.map(p=>`<li>${p}</li>`).join('')}</ul>
+    </div>
+    <div class="engage-block">
+      <div class="engage-head"><div class="engage-icon">📋</div>Plan Your Next Steps</div>
+      <ul class="bullet-list">${s.plan.map(p=>`<li>${p}</li>`).join('')}</ul>
+    </div>
+    <div class="engage-block">
+      <div class="engage-head"><div class="engage-icon">⚠️</div>Cautions &amp; Encouragement</div>
+      <ul class="bullet-list">${s.cautions.map(c=>`<li>${c}</li>`).join('')}</ul>
+    </div>
+  `;
+
+  // Talk tab
+  const talkTab = document.getElementById('tab-talk');
+  talkTab.style.setProperty('--char-color', s.color);
+  const qa = TALK[key] || [];
+  talkTab.innerHTML = `
+    <p class="talk-intro">Ask ${s.name} a question and hear their perspective.</p>
+    <div class="talk-questions">${qa.map((item,i)=>`<button class="talk-q-btn" data-idx="${i}">${item.q}</button>`).join('')}</div>
+    <div class="talk-convo"></div>
+  `;
+  const askedIdxs = new Set();
+  const convo = talkTab.querySelector('.talk-convo');
+
+  function renderTopLevel() {
+    const remaining = qa.filter((_, i) => !askedIdxs.has(i));
+    if (!remaining.length) return;
+    const row = document.createElement('div');
+    row.className = 'talk-questions';
+    remaining.forEach((item, ri) => {
+      const origIdx = qa.indexOf(item);
+      const btn = document.createElement('button');
+      btn.className = 'talk-q-btn';
+      btn.textContent = item.q;
+      btn.dataset.idx = origIdx;
+      btn.dataset.item = JSON.stringify(item);
+      row.appendChild(btn);
+    });
+    convo.appendChild(row);
+    bindTopLevel(row.querySelectorAll('.talk-q-btn'));
+    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function addExchange(item, afterFn) {
+    const uBubble = document.createElement('div');
+    uBubble.className = 'talk-bubble talk-bubble-user';
+    uBubble.textContent = item.q;
+    const cBubble = document.createElement('div');
+    cBubble.className = 'talk-bubble talk-bubble-char';
+    cBubble.textContent = item.a;
+    convo.appendChild(uBubble);
+    convo.appendChild(cBubble);
+    if (afterFn) afterFn();
+    cBubble.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function bindFollowUp(buttons) {
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('asked')) return;
+        btn.parentElement.querySelectorAll('.talk-q-btn').forEach(b => b.classList.add('asked'));
+        const item = JSON.parse(btn.dataset.item);
+        addExchange(item, () => renderTopLevel());
+      });
+    });
+  }
+
+  function bindTopLevel(buttons) {
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('asked')) return;
+        const idx = parseInt(btn.dataset.idx);
+        askedIdxs.add(idx);
+        btn.parentElement.querySelectorAll('.talk-q-btn').forEach(b => b.classList.add('asked'));
+        const item = JSON.parse(btn.dataset.item);
+        addExchange(item, () => {
+          if (item.follow && item.follow.length) {
+            const followRow = document.createElement('div');
+            followRow.className = 'talk-questions';
+            item.follow.forEach(f => {
+              const fb = document.createElement('button');
+              fb.className = 'talk-q-btn';
+              fb.textContent = f.q;
+              fb.dataset.item = JSON.stringify(f);
+              followRow.appendChild(fb);
+            });
+            convo.appendChild(followRow);
+            bindFollowUp(followRow.querySelectorAll('.talk-q-btn'));
+          }
+        });
+      });
+    });
+  }
+
+  talkTab.querySelectorAll('.talk-q-btn').forEach(btn => {
+    const idx = parseInt(btn.dataset.idx);
+    btn.dataset.item = JSON.stringify(qa[idx]);
+  });
+  bindTopLevel(talkTab.querySelectorAll('.talk-q-btn'));
+
+  // Reset tabs
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-tab="overview"]').classList.add('active');
+  document.getElementById('tab-overview').classList.add('active');
+
+  panel.classList.add('open');
+  overlay.classList.add('active');
+}
+
+function closePanel() {
+  panel.classList.remove('open');
+  overlay.classList.remove('active');
+}
+
+document.getElementById('panelClose').addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

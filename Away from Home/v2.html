@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Away From Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Jersey+15&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f0ede6;
+    color: #1a1a2e;
+    font-family: 'Press Start 2P', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.12) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  #screen {
+    width: 100%;
+    max-width: 640px;
+    padding: 40px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 44px;
+  }
+
+  .game-title {
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .game-title .line1 {
+    font-size: 32px;
+    color: #2a2aaa;
+    text-shadow: 4px 4px 0 #aaaaee;
+    animation: flicker 5s infinite;
+  }
+
+  .game-title .line2 {
+    font-size: 9px;
+    color: #cc5500;
+    letter-spacing: 3px;
+    margin-top: 14px;
+  }
+
+  @keyframes flicker {
+    0%, 94%, 100% { opacity: 1; }
+    95% { opacity: 0.7; }
+    97% { opacity: 1; }
+    99% { opacity: 0.85; }
+  }
+
+  .form-block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .form-label {
+    font-size: 9px;
+    color: #888;
+    letter-spacing: 1px;
+  }
+
+  .name-input {
+    width: 100%;
+    background: #ffffff;
+    border: 3px solid #c8c4bc;
+    color: #1a1a2e;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    padding: 16px 18px;
+    outline: none;
+    transition: border-color 0.15s;
+    letter-spacing: 2px;
+  }
+
+  .name-input:focus {
+    border-color: #2a2aaa;
+  }
+
+  .name-input::placeholder {
+    color: #c8c4bc;
+  }
+
+  .gender-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .gender-btn {
+    flex: 1;
+    background: #ffffff;
+    border: 3px solid #c8c4bc;
+    color: #aaa;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 18px 8px;
+    cursor: pointer;
+    transition: all 0.1s;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .gender-btn:hover {
+    border-color: #2a2aaa;
+    color: #1a1a2e;
+  }
+
+  .gender-btn.selected {
+    border-color: #2a2aaa;
+    color: #2a2aaa;
+    background: #eeeeff;
+  }
+
+  .gender-btn .g-icon {
+    font-size: 26px;
+    font-family: sans-serif;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .continue-btn {
+    width: 100%;
+    background: none;
+    border: 3px solid #c8c4bc;
+    color: #c8c4bc;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    padding: 18px;
+    cursor: not-allowed;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .continue-btn.ready {
+    border-color: #2a2aaa;
+    color: #2a2aaa;
+    cursor: pointer;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .continue-btn.ready:hover {
+    background: #eeeeff;
+    color: #1a1acc;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 16px #2a2aaa33; }
+  }
+
+  .error-msg {
+    font-size: 7px;
+    color: #cc2200;
+    text-align: center;
+    min-height: 12px;
+    letter-spacing: 1px;
+  }
+
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .country-btn {
+    background: #ffffff;
+    border: 3px solid #c8c4bc;
+    color: #aaa;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 18px 8px;
+    cursor: pointer;
+    transition: all 0.1s;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.6;
+  }
+
+  .country-btn:hover {
+    border-color: #2a2aaa;
+    color: #1a1a2e;
+  }
+
+  .country-btn.selected {
+    border-color: #2a2aaa;
+    color: #2a2aaa;
+    background: #eeeeff;
+  }
+
+  .c-flag {
+    font-size: 36px;
+    font-family: sans-serif;
+  }
+
+  .c-name {
+    font-size: 7px;
+  }
+
+  /* OPENING SCENE */
+  #opening-scene {
+    display: none;
+    width: 100%;
+    max-width: 900px;
+    padding: 40px 48px 40px;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .scene-box {
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    border: 3px solid #c8c4bc;
+    border-bottom: none;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .scene-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    opacity: 0;
+    animation: fadeInScene 2.5s ease-in forwards;
+  }
+
+  @keyframes fadeInScene {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .dialogue-box {
+    width: 100%;
+    background: #fff;
+    border: 3px solid #c8c4bc;
+    border-bottom: none;
+    padding: 20px 22px;
+  }
+
+  .dialogue-speaker {
+    font-size: 7px;
+    color: #cc5500;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .dialogue-text {
+    font-family: 'Jersey 15', monospace;
+    font-size: 20px;
+    color: #1a1a2e;
+    line-height: 1.8;
+    min-height: 48px;
+  }
+
+  .choices-box {
+    width: 100%;
+    background: #fff;
+    border: 3px solid #c8c4bc;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .choice-btn {
+    background: none;
+    border: none;
+    border-top: 2px solid #e8e4dc;
+    color: #1a1a2e;
+    font-family: 'Jersey 15', monospace;
+    font-size: 20px;
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.8;
+    transition: background 0.1s;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .choice-btn:first-child { border-top: none; }
+  .choice-btn:hover { background: #fdf6ee; }
+
+  .choice-prefix { color: #ff7a1a; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div id="screen">
+
+  <div class="game-title">
+    <img src="Images/Logo - Away from Home.png" alt="Away From Home" style="max-width:588px; width:100%; image-rendering:pixelated; animation:flicker 5s infinite;">
+    <div class="line2">★ AN INTERNATIONAL STUDENT RPG ★</div>
+  </div>
+
+  <div class="form-block">
+    <div class="form-label">WHAT IS YOUR NAME?</div>
+    <input
+      id="name-input"
+      class="name-input"
+      type="text"
+      maxlength="12"
+      placeholder="ENTER NAME"
+      autocomplete="off"
+      spellcheck="false"
+      oninput="onFormChange()" onkeydown="playType()"
+    >
+  </div>
+
+  <div class="form-block">
+    <div class="form-label">YOUR GENDER?</div>
+    <div class="gender-row">
+      <button class="gender-btn" data-val="Male" onclick="selectGender(this)">
+        <span class="g-icon">♂</span>MALE
+      </button>
+      <button class="gender-btn" data-val="Female" onclick="selectGender(this)">
+        <span class="g-icon">♀</span>FEMALE
+      </button>
+    </div>
+  </div>
+
+  <div class="form-block">
+    <div class="error-msg" id="error-msg"></div>
+    <button class="continue-btn" id="continue-btn" onclick="onContinue()">▶ CONTINUE</button>
+  </div>
+
+</div>
+
+<!-- STUDY SCREEN -->
+<!-- OPENING SCENE -->
+<div id="opening-scene">
+  <div class="scene-box">
+    <img src="Images/a 16-bit image of a sunrise in america.jpg" alt="Opening Scene">
+  </div>
+  <div class="dialogue-box">
+    <div class="dialogue-text" id="dialogue-text"></div>
+  </div>
+  <div class="choices-box" id="choices-box"></div>
+</div>
+
+<div id="study-screen" style="display:none; width:100%; max-width:640px; padding:40px 48px; flex-direction:column; align-items:center; gap:44px;">
+
+  <div class="game-title">
+    <img src="Images/Logo - Away from Home.png" alt="Away From Home" style="max-width:588px; width:100%; image-rendering:pixelated; animation:flicker 5s infinite;">
+    <div class="line2">★ AN INTERNATIONAL STUDENT RPG ★</div>
+  </div>
+
+  <div class="form-block">
+    <div class="form-label">WHAT ARE YOU STUDYING?</div>
+    <div class="country-grid">
+      <button class="country-btn" data-val="Computer Science" onclick="selectStudy(this)">
+        <span class="c-flag">💻</span><span class="c-name">COMPUTER SCIENCE</span>
+      </button>
+      <button class="country-btn" data-val="Business" onclick="selectStudy(this)">
+        <span class="c-flag">📊</span><span class="c-name">BUSINESS</span>
+      </button>
+      <button class="country-btn" data-val="Engineering" onclick="selectStudy(this)">
+        <span class="c-flag">⚙️</span><span class="c-name">ENGINEERING</span>
+      </button>
+      <button class="country-btn" data-val="Medicine" onclick="selectStudy(this)">
+        <span class="c-flag">🩺</span><span class="c-name">MEDICINE</span>
+      </button>
+      <button class="country-btn" data-val="Mathematics" onclick="selectStudy(this)">
+        <span class="c-flag">📐</span><span class="c-name">MATHEMATICS</span>
+      </button>
+      <button class="country-btn" data-val="Arts & Design" onclick="selectStudy(this)">
+        <span class="c-flag">🎨</span><span class="c-name">ARTS & DESIGN</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-block">
+    <div class="error-msg" id="error-msg-3"></div>
+    <button class="continue-btn" id="continue-btn-3" onclick="onContinue3()">▶ CONTINUE</button>
+  </div>
+
+</div>
+
+<!-- COUNTRY SCREEN -->
+<div id="country-screen" style="display:none; width:100%; max-width:640px; padding:40px 48px; flex-direction:column; align-items:center; gap:44px;">
+
+  <div class="game-title">
+    <img src="Images/Logo - Away from Home.png" alt="Away From Home" style="max-width:588px; width:100%; image-rendering:pixelated; animation:flicker 5s infinite;">
+    <div class="line2">★ AN INTERNATIONAL STUDENT RPG ★</div>
+  </div>
+
+  <div class="form-block">
+    <div class="form-label">WHERE ARE YOU FROM?</div>
+    <div class="country-grid" id="country-grid">
+      <button class="country-btn" data-val="China" onclick="selectCountry(this)">
+        <span class="c-flag">🇨🇳</span><span class="c-name">CHINA</span>
+      </button>
+      <button class="country-btn" data-val="India" onclick="selectCountry(this)">
+        <span class="c-flag">🇮🇳</span><span class="c-name">INDIA</span>
+      </button>
+      <button class="country-btn" data-val="Philippines" onclick="selectCountry(this)">
+        <span class="c-flag">🇵🇭</span><span class="c-name">PHILIPPINES</span>
+      </button>
+      <button class="country-btn" data-val="Japan" onclick="selectCountry(this)">
+        <span class="c-flag">🇯🇵</span><span class="c-name">JAPAN</span>
+      </button>
+      <button class="country-btn" data-val="Malaysia" onclick="selectCountry(this)">
+        <span class="c-flag">🇲🇾</span><span class="c-name">MALAYSIA</span>
+      </button>
+      <button class="country-btn" data-val="Indonesia" onclick="selectCountry(this)">
+        <span class="c-flag">🇮🇩</span><span class="c-name">INDONESIA</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-block">
+    <div class="error-msg" id="error-msg-2"></div>
+    <button class="continue-btn" id="continue-btn-2" onclick="onContinue2()">▶ CONTINUE</button>
+  </div>
+
+</div>
+
+<!-- DEV NAV -->
+<div id="dev-bar" style="
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #1a1a2e;
+  border-top: 3px solid #2a2aaa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  z-index: 99999;
+  font-family: 'Press Start 2P', monospace;
+">
+  <span style="font-size:6px; color:#555; flex-shrink:0;">DEV ▶</span>
+  <button class="dev-btn" onclick="devGo('screen')">① NAME</button>
+  <button class="dev-btn" onclick="devGo('country-screen')">② COUNTRY</button>
+  <button class="dev-btn" onclick="devGo('study-screen')">③ STUDY</button>
+  <button class="dev-btn" onclick="devGo('opening-scene')">④ OPENING</button>
+</div>
+
+<style>
+  .dev-btn {
+    background: none;
+    border: 2px solid #3a3a8a;
+    color: #7c7cfc;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .dev-btn:hover { background: #2a2a5a; border-color: #7c7cfc; }
+  .dev-btn.active { background: #2a2a5a; border-color: #aaaaff; color: #fff; }
+  body { padding-bottom: 48px; }
+</style>
+
+<script>
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let ctx = null;
+
+  function getCtx() {
+    if (!ctx) ctx = new AudioCtx();
+    return ctx;
+  }
+
+  function playMutter() {
+    const ac = getCtx();
+    const n = ac.currentTime;
+    const freq = [180, 190, 200, 185][Math.floor(Math.random() * 4)];
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, n);
+    g.gain.setValueAtTime(0.035, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.05);
+    o.start(n); o.stop(n + 0.05);
+  }
+
+  function playType() {
+    const ac = getCtx();
+    const now = ac.currentTime;
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.04, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource();
+    const gain = ac.createGain();
+    src.buffer = buf;
+    src.connect(gain);
+    gain.connect(ac.destination);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    src.start(now);
+    src.stop(now + 0.04);
+  }
+
+  function playSelect() {
+    const ac = getCtx();
+    const now = ac.currentTime;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
+  const allScreens = ['screen', 'country-screen', 'study-screen', 'opening-scene'];
+
+  function devGo(id) {
+    allScreens.forEach(s => {
+      const el = document.getElementById(s);
+      el.style.display = 'none';
+    });
+    const target = document.getElementById(id);
+    target.style.display = (id === 'opening-scene') ? 'flex' : 'flex';
+    // Re-trigger fade animation on opening scene
+    if (id === 'opening-scene') {
+      const img = target.querySelector('img');
+      img.style.animation = 'none';
+      img.offsetHeight;
+      img.style.animation = '';
+      document.getElementById('dialogue-text').textContent = '';
+      document.getElementById('choices-box').innerHTML = '';
+      setTimeout(() => showDialogue(0), 2600);
+    }
+    document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.dev-btn[onclick="devGo('${id}')"]`).classList.add('active');
+  }
+
+  let selectedGender = null;
+  let selectedCountry = null;
+  const player = {};
+
+  function selectGender(el) {
+    document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedGender = el.dataset.val;
+    playSelect();
+    onFormChange();
+  }
+
+  function onFormChange() {
+    const name = document.getElementById('name-input').value.trim();
+    const btn = document.getElementById('continue-btn');
+    const ready = name.length > 0 && selectedGender !== null;
+    btn.classList.toggle('ready', ready);
+    document.getElementById('error-msg').textContent = '';
+  }
+
+  function onContinue() {
+    const name = document.getElementById('name-input').value.trim().toUpperCase();
+    if (!name) {
+      document.getElementById('error-msg').textContent = '! ENTER YOUR NAME FIRST';
+      return;
+    }
+    if (!selectedGender) {
+      document.getElementById('error-msg').textContent = '! SELECT YOUR GENDER';
+      return;
+    }
+    player.name = name;
+    player.gender = selectedGender;
+    document.getElementById('screen').style.display = 'none';
+    const cs = document.getElementById('country-screen');
+    cs.style.display = 'flex';
+  }
+
+  function selectCountry(el) {
+    document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCountry = el.dataset.val;
+    playSelect();
+    document.getElementById('continue-btn-2').classList.add('ready');
+    document.getElementById('error-msg-2').textContent = '';
+  }
+
+  function onContinue2() {
+    if (!selectedCountry) {
+      document.getElementById('error-msg-2').textContent = '! SELECT YOUR COUNTRY';
+      return;
+    }
+    player.country = selectedCountry;
+    document.getElementById('country-screen').style.display = 'none';
+    document.getElementById('study-screen').style.display = 'flex';
+  }
+
+  function selectStudy(el) {
+    document.querySelectorAll('#study-screen .country-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    player.study = el.dataset.val;
+    playSelect();
+    document.getElementById('continue-btn-3').classList.add('ready');
+    document.getElementById('error-msg-3').textContent = '';
+  }
+
+  function onContinue3() {
+    if (!player.study) {
+      document.getElementById('error-msg-3').textContent = '! SELECT YOUR FIELD OF STUDY';
+      return;
+    }
+    document.getElementById('study-screen').style.display = 'none';
+    const scene = document.getElementById('opening-scene');
+    scene.style.display = 'flex';
+    setTimeout(() => showDialogue(0), 2600);
+  }
+
+  const story = [
+    {
+      text: () => `A new day begins. The sun is barely up, but campus is already alive with movement. It's the first day of your semester as a ${player.study} student here.\n\nYour dorm room is a mess of unopened bags. Your phone buzzes — a reminder for orientation. Your stomach growls. What do you want to do first?`,
+      choices: [
+        { label: "Head straight to orientation. Don't want to be late.", next: 1 },
+        { label: "Unpack first. You can't live out of bags.", next: 2 },
+        { label: "Find breakfast. Everything else can wait.", next: 3 },
+        { label: "Call home. Your family is probably worried.", next: 4 },
+      ]
+    },
+    {
+      text: () => `You grab your schedule and hurry across campus. The orientation hall is packed — hundreds of new students, all looking just as lost as you feel.\n\nA student coordinator waves you over. "First time abroad?" she asks with a warm smile. You nod. She hands you a welcome packet and points you to a seat.\n\nFor a moment, surrounded by strangers, you feel the weight of how far you are from home.`,
+      choices: [
+        { label: "Find a seat and introduce yourself to someone nearby.", next: null },
+        { label: "Sit quietly and read through the packet.", next: null },
+      ]
+    },
+    {
+      text: () => `You spend the next hour folding clothes and arranging your desk just right. It helps — making the space yours.\n\nWhen you finally look up, sunlight is pouring through the window. On the desk: a photo of your family back home. You pause for a moment, hand resting on it.\n\nThen your phone buzzes. Orientation starts in 20 minutes.`,
+      choices: [
+        { label: "Rush to orientation — still time to make it.", next: null },
+        { label: "Skip it. You'll figure things out on your own.", next: null },
+      ]
+    },
+    {
+      text: () => `The cafeteria is loud and warm, smelling of coffee and something fried. You scan the options — nothing quite like home, but your stomach doesn't care.\n\nYou find a small table by the window. A student sits down across from you uninvited, tray in hand. "International?" they ask. You say yes. They grin. "Me too. ${player.study}?" \n\nYou both laugh. It's a small thing, but it helps.`,
+      choices: [
+        { label: "Keep talking — ask where they're from.", next: null },
+        { label: "Eat quickly and head to orientation.", next: null },
+      ]
+    },
+    {
+      text: () => `The phone rings twice before your mom picks up. Her voice fills the room and something loosens in your chest.\n\nShe asks if you've eaten. If your room is okay. If the people are nice. You answer yes to everything, even the things that aren't quite true yet.\n\n"You worked so hard to get there," she says. "We're proud of you."\n\nYou hang up and sit with that for a moment. Then you pick up your bag and head out the door.`,
+      choices: [
+        { label: "Head to orientation.", next: null },
+        { label: "Take a slow walk around campus first.", next: null },
+      ]
+    },
+  ];
+
+  let typingInterval = null;
+
+  function showDialogue(index) {
+    const node = story[index];
+    if (!node) return;
+    const text = typeof node.text === 'function' ? node.text() : node.text;
+    const el = document.getElementById('dialogue-text');
+    const choicesEl = document.getElementById('choices-box');
+    el.textContent = '';
+    choicesEl.innerHTML = '';
+    let i = 0;
+    if (typingInterval) clearInterval(typingInterval);
+    typingInterval = setInterval(() => {
+      if (i < text.length) {
+        el.textContent = text.slice(0, i + 1);
+        if (text[i] !== ' ' && text[i] !== '\n') playMutter();
+        i++;
+      } else {
+        clearInterval(typingInterval);
+        renderChoices(node.choices);
+      }
+    }, 18);
+  }
+
+  function renderChoices(choices) {
+    const box = document.getElementById('choices-box');
+    box.innerHTML = '';
+    choices.forEach((c, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-prefix">▶</span>${c.label}`;
+      btn.onclick = () => {
+        playSelect();
+        if (c.next !== null) showDialogue(c.next);
+      };
+      box.appendChild(btn);
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Four Horsemen – Interactive Comic</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #111;
+      color: #fff;
+      font-family: 'Bangers', 'Impact', cursive;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── INTRO ── */
+    #intro {
+      position: fixed; inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.8s;
+    }
+    #intro h1 {
+      font-size: clamp(2.5rem, 8vw, 6rem);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #e8341a;
+      text-shadow: 4px 4px 0 #000, 0 0 30px #e8341a88;
+      animation: flicker 3s infinite;
+    }
+    #intro p {
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      color: #aaa;
+      margin-top: 10px;
+      letter-spacing: 2px;
+    }
+    #intro button {
+      margin-top: 40px;
+      padding: 14px 48px;
+      font-size: 1.4rem;
+      font-family: inherit;
+      letter-spacing: 3px;
+      background: #e8341a;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: background 0.2s, transform 0.1s;
+    }
+    #intro button:hover { background: #ff5533; transform: scale(1.05); }
+
+    @keyframes flicker {
+      0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+      20%,22%,24%,55% { opacity: 0.5; }
+    }
+
+    /* ── READER ── */
+    #reader {
+      display: none;
+      position: fixed; inset: 0;
+      flex-direction: column;
+    }
+
+    /* ── TOOLBAR ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: #1a1a1a;
+      border-bottom: 2px solid #e8341a;
+      flex-shrink: 0;
+      z-index: 10;
+      gap: 8px;
+    }
+    #toolbar .title { font-size: 1.2rem; letter-spacing: 3px; color: #e8341a; white-space: nowrap; }
+    #toolbar .controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-family: inherit;
+      letter-spacing: 1px;
+      transition: background 0.15s, border-color 0.15s;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #e8341a; border-color: #e8341a; }
+    .btn:disabled { opacity: 0.3; cursor: default; background: #2a2a2a; border-color: #444; }
+    .btn.active { background: #e8341a; border-color: #e8341a; }
+    #pageInfo { font-size: 0.85rem; color: #aaa; min-width: 90px; text-align: center; }
+
+    /* ── THUMBNAIL STRIP ── */
+    #strip {
+      display: flex;
+      gap: 5px;
+      padding: 5px 10px;
+      background: #161616;
+      border-bottom: 1px solid #333;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: thin;
+      scrollbar-color: #e8341a #222;
+    }
+    .thumb {
+      height: 52px;
+      cursor: pointer;
+      border: 2px solid #333;
+      border-radius: 2px;
+      transition: border-color 0.15s, transform 0.15s;
+      flex-shrink: 0;
+    }
+    .thumb:hover { border-color: #e8341a; transform: scale(1.08); }
+    .thumb.active { border-color: #e8341a; box-shadow: 0 0 8px #e8341a88; }
+
+    /* ── VIEWPORT ── */
+    #viewport {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: #0d0d0d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+    }
+    #viewport.grabbing { cursor: grabbing; }
+
+    /* ── PAGE WRAP ── */
+    #pageWrap {
+      position: relative;
+      transform-origin: center center;
+      user-select: none;
+    }
+    #pageWrap.animating {
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #pageImg {
+      display: block;
+      max-height: calc(100vh - 140px);
+      max-width: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    /* ── PAGE SLIDE ANIMATIONS ── */
+    #pageWrap.slide-out-left  { animation: slideOutLeft  0.28s ease forwards; }
+    #pageWrap.slide-out-right { animation: slideOutRight 0.28s ease forwards; }
+    #pageWrap.slide-in-left   { animation: slideInLeft   0.28s ease forwards; }
+    #pageWrap.slide-in-right  { animation: slideInRight  0.28s ease forwards; }
+    @keyframes slideOutLeft  { to { transform: translateX(-80px) scale(0.92); opacity: 0; } }
+    @keyframes slideOutRight { to { transform: translateX( 80px) scale(0.92); opacity: 0; } }
+    @keyframes slideInLeft   { from { transform: translateX( 80px) scale(0.92); opacity: 0; } }
+    @keyframes slideInRight  { from { transform: translateX(-80px) scale(0.92); opacity: 0; } }
+
+    /* ── PANEL DOTS ── */
+    #panelDots {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      z-index: 20;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #444;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .dot.active { background: #e8341a; transform: scale(1.4); }
+
+    /* ── CHAPTER BANNER ── */
+    #chapterBanner {
+      display: none;
+      position: fixed;
+      bottom: 40px; left: 50%;
+      transform: translateX(-50%);
+      background: #e8341a;
+      color: #fff;
+      padding: 9px 28px;
+      font-size: 1.1rem;
+      letter-spacing: 4px;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      z-index: 30;
+      animation: bannerPop 2.8s forwards;
+      white-space: nowrap;
+    }
+    @keyframes bannerPop {
+      0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+      78%  { opacity: 1; }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    }
+
+    #hint {
+      position: fixed;
+      bottom: 6px; right: 12px;
+      font-family: Georgia, serif;
+      font-size: 0.68rem;
+      color: #3a3a3a;
+      letter-spacing: 1px;
+    }
+
+    ::-webkit-scrollbar { height: 5px; }
+    ::-webkit-scrollbar-track { background: #222; }
+    ::-webkit-scrollbar-thumb { background: #e8341a; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <h1>The Four Horsemen</h1>
+  <p>By Travis R. Hill &amp; Ben McMenuk &nbsp;·&nbsp; Art by Tony Chen</p>
+  <button onclick="startComic()">READ NOW</button>
+</div>
+
+<!-- READER -->
+<div id="reader">
+  <div id="toolbar">
+    <span class="title">THE FOUR HORSEMEN</span>
+    <div class="controls">
+      <button class="btn active" id="btnGuided" onclick="toggleGuided()">⊞ Guided</button>
+      <button class="btn" id="btnZoomOut" onclick="manualZoom(-0.15)">− Zoom</button>
+      <button class="btn" id="btnZoomIn"  onclick="manualZoom( 0.15)">+ Zoom</button>
+      <button class="btn" onclick="resetView()">Fit</button>
+      <span id="pageInfo">Page 1 / 10</span>
+      <button class="btn" id="btnPrev" onclick="prev()">◀ Prev</button>
+      <button class="btn" id="btnNext" onclick="next()">Next ▶</button>
+    </div>
+  </div>
+
+  <div id="strip"></div>
+
+  <div id="viewport">
+    <div id="pageWrap">
+      <img id="pageImg" src="" alt="Comic page" draggable="false"/>
+    </div>
+  </div>
+
+  <div id="panelDots"></div>
+  <div id="chapterBanner"></div>
+  <div id="hint">← → keys to navigate panels &amp; pages · scroll to zoom · G toggles guided view</div>
+</div>
+
+<script>
+// ── PANEL DATA ────────────────────────────────────────────────────────────────
+// [xPct, yPct, wPct, hPct] — crop region as % of page image
+const panels = {
+  1:  [ [0, 0, 100, 100] ],
+
+  2:  [
+        [0,  0,  100, 27],   // promotion at MachTech
+        [0, 27,  100, 36],   // anniversary dinner
+        [0, 63,  100, 37],   // horsemen whisper
+      ],
+
+  3:  [
+        [0,  0,  100, 30],   // what should we watch?
+        [0, 30,  100, 32],   // couple on the couch
+        [0, 62,  100, 38],   // horsemen appear
+      ],
+
+  4:  [
+        [0,  0,  100, 38],   // phone ping — date night cancelled
+        [0, 38,  100, 24],   // phone screen close-up
+        [0, 62,  100, 38],   // horsemen crowd around him
+      ],
+
+  5:  [
+        [0,  0,  100, 38],   // basketball court
+        [0, 38,  100, 35],   // confrontation
+        [0, 73,  100, 27],   // Kwon snaps
+      ],
+
+  6:  [
+        [0,  0,  100, 50],   // Tulisa confronts at door
+        [0, 50,  100, 50],   // argument + walks out
+      ],
+
+  7:  [
+        [0,  0,  100, 28],   // driving — not good enough
+        [0, 28,  100, 27],   // won't believe your lies
+        [0, 55,  100, 20],   // can't take it anymore
+        [0, 75,  100, 25],   // rock bottom / God appears
+      ],
+
+  8:  [
+        [0,   0,  50, 45],   // You are my beloved
+        [50,  0,  50, 45],   // Exactly where you are supposed to be
+        [0,  45,  50, 42],   // Right now, be free
+        [50, 45,  50, 42],   // You're exactly everything you dreamed
+        [0,  87, 100, 13],   // Forgiven. Beloved. Redeemed.
+      ],
+
+  9:  [
+        [0,  0,  100, 35],   // leaving work early
+        [0, 35,  100, 35],   // restored friendships
+        [0, 70,  100, 30],   // park — reflect His face
+      ],
+
+  10: [ [0, 0, 100, 100] ],
+};
+
+const chapters = {
+  1: "THE FOUR HORSEMEN",
+  2: "ACT I — THE PROMOTION",
+  5: "ACT II — THE UNRAVELING",
+  7: "ACT III — ROCK BOTTOM",
+  8: "ACT IV — REDEEMED",
+  9: "EPILOGUE",
+  10: "ABOUT INDIGITOUS",
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const TOTAL      = 10;
+let currentPage  = 1;
+let currentPanel = 0;
+let guidedMode   = true;
+let zoomLevel    = 1;
+let panX = 0, panY = 0;
+let isPanning = false, startX, startY;
+
+// ── START ──────────────────────────────────────────────────────────────────────
+function startComic() {
+  document.getElementById('intro').style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('intro').style.display = 'none';
+    document.getElementById('reader').style.display = 'flex';
+    buildStrip();
+    loadPage(1, 'none', 0);
+    setupEvents();
+  }, 800);
+}
+
+function buildStrip() {
+  const strip = document.getElementById('strip');
+  for (let i = 1; i <= TOTAL; i++) {
+    const img = document.createElement('img');
+    img.src = `page${i}.png`;
+    img.className = 'thumb';
+    img.title = `Page ${i}`;
+    img.onclick = () => jumpToPage(i);
+    strip.appendChild(img);
+  }
+}
+
+// ── PAGE LOADING ──────────────────────────────────────────────────────────────
+function loadPage(n, direction, startPanel) {
+  const wrap = document.getElementById('pageWrap');
+
+  const doLoad = () => {
+    currentPage  = n;
+    currentPanel = startPanel;
+    zoomLevel = 1; panX = 0; panY = 0;
+    setTransform(false);
+
+    const img = document.getElementById('pageImg');
+    img.onload = () => {
+      buildDots(n);
+      updateUI();
+      if (guidedMode) {
+        setTimeout(() => zoomToPanel(currentPanel, true), 80);
+      }
+      if (chapters[n]) showChapterBanner(chapters[n]);
+      if (direction !== 'none') {
+        const inCls = direction === 'left' ? 'slide-in-left' : 'slide-in-right';
+        wrap.classList.add(inCls);
+        wrap.addEventListener('animationend', () => wrap.classList.remove(inCls), { once: true });
+      }
+    };
+    img.src = `page${n}.png`;
+  };
+
+  if (direction !== 'none') {
+    const outCls = direction === 'left' ? 'slide-out-left' : 'slide-out-right';
+    wrap.classList.add(outCls);
+    wrap.addEventListener('animationend', () => {
+      wrap.classList.remove(outCls);
+      doLoad();
+    }, { once: true });
+  } else {
+    doLoad();
+  }
+}
+
+function jumpToPage(n) {
+  loadPage(n, n > currentPage ? 'left' : n < currentPage ? 'right' : 'none', 0);
+}
+
+// ── GUIDED PANEL ZOOM ─────────────────────────────────────────────────────────
+function zoomToPanel(idx, instant) {
+  const p = (panels[currentPage] || [])[idx];
+  if (!p) return;
+
+  const img = document.getElementById('pageImg');
+  const vp  = document.getElementById('viewport');
+  const vpW = vp.clientWidth;
+  const vpH = vp.clientHeight;
+  const imgW = img.clientWidth;
+  const imgH = img.clientHeight;
+  if (!imgW || !imgH) return;
+
+  const [xPct, yPct, wPct, hPct] = p;
+  const panelW = wPct / 100 * imgW;
+  const panelH = hPct / 100 * imgH;
+
+  zoomLevel = Math.min(4, Math.max(0.5, Math.min(vpW / panelW, vpH / panelH) * 0.92));
+
+  // Panel center offset from image center
+  const pcX = ((xPct / 100) + (wPct / 200) - 0.5) * imgW;
+  const pcY = ((yPct / 100) + (hPct / 200) - 0.5) * imgH;
+  panX = -pcX * zoomLevel;
+  panY = -pcY * zoomLevel;
+
+  setTransform(!instant);
+  updateDots(idx);
+}
+
+// ── TRANSFORM ─────────────────────────────────────────────────────────────────
+function setTransform(animate) {
+  const wrap = document.getElementById('pageWrap');
+  if (animate) {
+    wrap.classList.add('animating');
+    wrap.addEventListener('transitionend', () => wrap.classList.remove('animating'), { once: true });
+  } else {
+    wrap.classList.remove('animating');
+  }
+  wrap.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function next() {
+  const count = (panels[currentPage] || []).length;
+  if (guidedMode && currentPanel < count - 1) {
+    currentPanel++;
+    zoomToPanel(currentPanel, false);
+    updateUI();
+  } else if (currentPage < TOTAL) {
+    loadPage(currentPage + 1, 'left', 0);
+  }
+}
+
+function prev() {
+  if (guidedMode && currentPanel > 0) {
+    currentPanel--;
+    zoomToPanel(currentPanel, false);
+    updateUI();
+  } else if (currentPage > 1) {
+    const prevCount = (panels[currentPage - 1] || []).length;
+    loadPage(currentPage - 1, 'right', prevCount - 1);
+  }
+}
+
+// ── GUIDED TOGGLE ─────────────────────────────────────────────────────────────
+function toggleGuided() {
+  guidedMode = !guidedMode;
+  const btn = document.getElementById('btnGuided');
+  btn.classList.toggle('active', guidedMode);
+  btn.textContent = guidedMode ? '⊞ Guided' : '⊟ Full Page';
+  document.getElementById('panelDots').style.display = guidedMode ? 'flex' : 'none';
+  guidedMode ? zoomToPanel(currentPanel, false) : resetView();
+}
+
+// ── DOTS ─────────────────────────────────────────────────────────────────────
+function buildDots(n) {
+  const c = document.getElementById('panelDots');
+  c.innerHTML = '';
+  c.style.display = guidedMode ? 'flex' : 'none';
+  const count = (panels[n] || []).length;
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    const idx = i;
+    d.onclick = () => { currentPanel = idx; zoomToPanel(idx, false); updateUI(); };
+    c.appendChild(d);
+  }
+}
+
+function updateDots(idx) {
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function updateUI() {
+  const count = (panels[currentPage] || []).length;
+  const panelLabel = guidedMode && count > 1 ? ` · Panel ${currentPanel + 1}/${count}` : '';
+  document.getElementById('pageInfo').textContent = `Page ${currentPage} / ${TOTAL}${panelLabel}`;
+  const isFirst = currentPage === 1 && currentPanel === 0;
+  const isLast  = currentPage === TOTAL && currentPanel === count - 1;
+  document.getElementById('btnPrev').disabled = isFirst;
+  document.getElementById('btnNext').disabled = isLast;
+  document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i + 1 === currentPage));
+  const thumb = document.querySelectorAll('.thumb')[currentPage - 1];
+  if (thumb) thumb.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+}
+
+// ── MANUAL ZOOM & PAN ─────────────────────────────────────────────────────────
+function manualZoom(delta) {
+  if (guidedMode) { guidedMode = false; toggleGuided(); return; }
+  zoomLevel = Math.max(0.4, Math.min(4, zoomLevel + delta));
+  setTransform(false);
+}
+
+function resetView() {
+  zoomLevel = 1; panX = 0; panY = 0;
+  setTransform(true);
+}
+
+// ── EVENTS ────────────────────────────────────────────────────────────────────
+function setupEvents() {
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   { e.preventDefault(); prev(); }
+    if (e.key === 'Escape') resetView();
+    if (e.key === '+' || e.key === '=') manualZoom( 0.2);
+    if (e.key === '-') manualZoom(-0.2);
+    if (e.key === '0') resetView();
+    if (e.key === 'g' || e.key === 'G') toggleGuided();
+  });
+
+  const vp = document.getElementById('viewport');
+
+  vp.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoomLevel = Math.max(0.4, Math.min(4, zoomLevel + (e.deltaY < 0 ? 0.12 : -0.12)));
+    setTransform(false);
+  }, { passive: false });
+
+  vp.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    isPanning = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+    vp.classList.add('grabbing');
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isPanning) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    document.getElementById('pageWrap').style.transform =
+      `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+  });
+  window.addEventListener('mouseup', () => { isPanning = false; vp.classList.remove('grabbing'); });
+
+  let tx = 0;
+  vp.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  vp.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+  });
+}
+
+// ── CHAPTER BANNER ────────────────────────────────────────────────────────────
+function showChapterBanner(text) {
+  const b = document.getElementById('chapterBanner');
+  b.textContent = text;
+  b.style.display = 'block';
+  b.style.animation = 'none';
+  void b.offsetWidth;
+  b.style.animation = 'bannerPop 2.8s forwards';
+  b.addEventListener('animationend', () => b.style.display = 'none', { once: true });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sound Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f0ede6;
+    font-family: 'Press Start 2P', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 640px;
+    width: 100%;
+  }
+  h1 {
+    font-size: 10px;
+    color: #2a2aaa;
+    text-align: center;
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .sound-btn {
+    background: #fff;
+    border: 3px solid #c8c4bc;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #1a1a2e;
+    padding: 20px 12px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 2;
+    transition: all 0.1s;
+  }
+  .sound-btn:hover { border-color: #2a2aaa; color: #2a2aaa; }
+  .sound-btn:active { background: #eeeeff; }
+  .sound-btn .label { font-size: 6px; color: #aaa; display: block; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div style="display:flex; flex-direction:column; gap:40px; max-width:640px; width:100%;">
+
+  <div class="grid">
+    <h1>SELECTION SOUNDS</h1>
+    <button class="sound-btn" onclick="play1()">▶ BLIP UP<span class="label">ascending blip</span></button>
+    <button class="sound-btn" onclick="play2()">▶ COIN<span class="label">classic pickup</span></button>
+    <button class="sound-btn" onclick="play3()">▶ CHIME ✓<span class="label">current</span></button>
+    <button class="sound-btn" onclick="play4()">▶ CONFIRM<span class="label">two-beep</span></button>
+    <button class="sound-btn" onclick="play5()">▶ POP<span class="label">punchy single</span></button>
+    <button class="sound-btn" onclick="play6()">▶ BLIP DOWN<span class="label">descending</span></button>
+    <button class="sound-btn" onclick="play7()">▶ JINGLE<span class="label">three notes</span></button>
+    <button class="sound-btn" onclick="play8()">▶ CLICK<span class="label">short tap</span></button>
+    <button class="sound-btn" onclick="play9()">▶ SPARKLE<span class="label">rising arp</span></button>
+  </div>
+
+  <div class="grid">
+    <h1>DIALOGUE SOUNDS</h1>
+    <button class="sound-btn" onclick="previewDialogue('d1')">▶ BREATH<span class="label">barely there</span></button>
+    <button class="sound-btn" onclick="previewDialogue('d2')">▶ HUSH<span class="label">soft paper rustle</span></button>
+    <button class="sound-btn" onclick="previewDialogue('d3')">▶ FEATHER<span class="label">faint sine tap</span></button>
+    <button class="sound-btn" onclick="previewDialogue('d4')">▶ GHOST<span class="label">airy whisper</span></button>
+    <button class="sound-btn" onclick="previewDialogue('d5')">▶ DROPLET<span class="label">gentle water</span></button>
+    <button class="sound-btn" onclick="previewDialogue('d6')">▶ MUTTER<span class="label">low warm tone</span></button>
+  </div>
+
+  <div class="grid">
+    <h1>TYPING SOUNDS</h1>
+    <button class="sound-btn" onmousedown="startType('t1')" onmouseup="stopType()" onmouseleave="stopType()">▶ TICK<span class="label">light tap</span></button>
+    <button class="sound-btn" onmousedown="startType('t2')" onmouseup="stopType()" onmouseleave="stopType()">▶ CLACK<span class="label">mechanical</span></button>
+    <button class="sound-btn" onmousedown="startType('t3')" onmouseup="stopType()" onmouseleave="stopType()">▶ BLIP<span class="label">digital beep</span></button>
+    <button class="sound-btn" onmousedown="startType('t4')" onmouseup="stopType()" onmouseleave="stopType()">▶ POP<span class="label">soft pop</span></button>
+    <button class="sound-btn" onmousedown="startType('t5')" onmouseup="stopType()" onmouseleave="stopType()">▶ CHIRP<span class="label">high pitch</span></button>
+    <button class="sound-btn" onmousedown="startType('t6')" onmouseup="stopType()" onmouseleave="stopType()">▶ NOISE<span class="label">typewriter</span></button>
+  </div>
+
+</div>
+
+<script>
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+
+  function osc(freq, type, startT, endT, vol = 0.18) {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = type;
+    o.frequency.setValueAtTime(freq, startT);
+    g.gain.setValueAtTime(vol, startT);
+    g.gain.exponentialRampToValueAtTime(0.001, endT);
+    o.start(startT); o.stop(endT);
+  }
+
+  // 1. Blip Up (current)
+  function play1() {
+    const n = ac.currentTime;
+    osc(523, 'square', n,      n+0.06);
+    osc(784, 'square', n+0.07, n+0.17);
+  }
+
+  // 2. Coin
+  function play2() {
+    const n = ac.currentTime;
+    osc(988,  'square', n,      n+0.04);
+    osc(1319, 'square', n+0.05, n+0.18);
+  }
+
+  // 3. Chime (sine)
+  function play3() {
+    const n = ac.currentTime;
+    osc(880, 'sine', n, n+0.25, 0.22);
+  }
+
+  // 4. Confirm (two-beep)
+  function play4() {
+    const n = ac.currentTime;
+    osc(440, 'square', n,      n+0.07);
+    osc(660, 'square', n+0.09, n+0.18);
+  }
+
+  // 5. Pop (punchy)
+  function play5() {
+    const n = ac.currentTime;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'square';
+    o.frequency.setValueAtTime(400, n);
+    o.frequency.exponentialRampToValueAtTime(80, n + 0.08);
+    g.gain.setValueAtTime(0.25, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.1);
+    o.start(n); o.stop(n + 0.1);
+  }
+
+  // 6. Blip Down
+  function play6() {
+    const n = ac.currentTime;
+    osc(784, 'square', n,      n+0.06);
+    osc(523, 'square', n+0.07, n+0.17);
+  }
+
+  // 7. Jingle (three notes)
+  function play7() {
+    const n = ac.currentTime;
+    osc(523, 'square', n,      n+0.07);
+    osc(659, 'square', n+0.08, n+0.15);
+    osc(784, 'square', n+0.16, n+0.26);
+  }
+
+  // 8. Click (very short)
+  function play8() {
+    const n = ac.currentTime;
+    osc(600, 'square', n, n+0.04, 0.2);
+  }
+
+  // 9. Sparkle (rising arp)
+  function play9() {
+    const n = ac.currentTime;
+    [523, 659, 784, 1047].forEach((f, i) => {
+      osc(f, 'sine', n + i*0.055, n + i*0.055 + 0.1, 0.15);
+    });
+  }
+
+  // ---- DIALOGUE PREVIEW ----
+  let dialogueInterval = null;
+
+  function previewDialogue(id) {
+    if (dialogueInterval) clearInterval(dialogueInterval);
+    const fn = { d1: dD1, d2: dD2, d3: dD3, d4: dD4, d5: dD5, d6: dD6 }[id];
+    let count = 0;
+    fn();
+    dialogueInterval = setInterval(() => {
+      fn();
+      count++;
+      if (count > 18) clearInterval(dialogueInterval);
+    }, 80);
+  }
+
+  // D1: Breath — ultra-quiet filtered noise, almost nothing
+  function dD1() {
+    const n = ac.currentTime;
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.03, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource();
+    const g = ac.createGain();
+    src.buffer = buf; src.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.018, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.03);
+    src.start(n); src.stop(n + 0.03);
+  }
+
+  // D2: Hush — very short noise with quick fade, paper-like
+  function dD2() {
+    const n = ac.currentTime;
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.025, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const src = ac.createBufferSource();
+    const g = ac.createGain();
+    src.buffer = buf; src.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.03, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.025);
+    src.start(n); src.stop(n + 0.025);
+  }
+
+  // D3: Feather — barely audible sine tap
+  function dD3() {
+    const n = ac.currentTime;
+    osc(600 + Math.random() * 30, 'sine', n, n + 0.04, 0.03);
+  }
+
+  // D4: Ghost — airy sine, very low vol, slight pitch drift
+  function dD4() {
+    const n = ac.currentTime;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(400 + Math.random() * 50, n);
+    o.frequency.linearRampToValueAtTime(300, n + 0.05);
+    g.gain.setValueAtTime(0.025, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.05);
+    o.start(n); o.stop(n + 0.05);
+  }
+
+  // D5: Droplet — soft sine with quick attack, watery feel
+  function dD5() {
+    const n = ac.currentTime;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(900, n);
+    o.frequency.exponentialRampToValueAtTime(500, n + 0.06);
+    g.gain.setValueAtTime(0.0, n);
+    g.gain.linearRampToValueAtTime(0.04, n + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.06);
+    o.start(n); o.stop(n + 0.06);
+  }
+
+  // D6: Mutter — warm low sine, barely audible
+  function dD6() {
+    const n = ac.currentTime;
+    const freq = [180, 190, 200, 185][Math.floor(Math.random() * 4)];
+    osc(freq, 'sine', n, n + 0.05, 0.035);
+  }
+
+  // ---- TYPING SOUNDS ----
+  let typeInterval = null;
+
+  function stopType() {
+    clearInterval(typeInterval);
+    typeInterval = null;
+  }
+
+  function startType(id) {
+    stopType();
+    const fn = { t1: typeT1, t2: typeT2, t3: typeT3, t4: typeT4, t5: typeT5, t6: typeT6 }[id];
+    fn();
+    typeInterval = setInterval(fn, 120);
+  }
+
+  // T1: Light tick
+  function typeT1() {
+    const n = ac.currentTime;
+    osc(500 + Math.random()*60, 'square', n, n+0.03, 0.06);
+  }
+
+  // T2: Clack (mechanical)
+  function typeT2() {
+    const n = ac.currentTime;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(180 + Math.random()*40, n);
+    o.frequency.exponentialRampToValueAtTime(60, n + 0.05);
+    g.gain.setValueAtTime(0.12, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.06);
+    o.start(n); o.stop(n + 0.06);
+  }
+
+  // T3: Digital blip
+  function typeT3() {
+    const n = ac.currentTime;
+    osc(700 + Math.random()*100, 'square', n, n+0.025, 0.07);
+  }
+
+  // T4: Soft pop
+  function typeT4() {
+    const n = ac.currentTime;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(300 + Math.random()*60, n);
+    o.frequency.exponentialRampToValueAtTime(100, n + 0.04);
+    g.gain.setValueAtTime(0.1, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.05);
+    o.start(n); o.stop(n + 0.05);
+  }
+
+  // T5: Chirp
+  function typeT5() {
+    const n = ac.currentTime;
+    osc(1200 + Math.random()*200, 'square', n, n+0.02, 0.05);
+  }
+
+  // T6: Typewriter noise
+  function typeT6() {
+    const n = ac.currentTime;
+    // White noise burst via buffer
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.04, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+    const src = ac.createBufferSource();
+    const g = ac.createGain();
+    src.buffer = buf;
+    src.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.08, n);
+    g.gain.exponentialRampToValueAtTime(0.001, n + 0.04);
+    src.start(n); src.stop(n + 0.04);
+  }
+</script>
+</body>
+</html>

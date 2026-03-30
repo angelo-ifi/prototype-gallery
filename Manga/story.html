@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Dream Between — A Campus Story</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Reenie+Beanie&family=Short+Stack&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f4f4f4;
+      --surface:  #eaeaea;
+      --border:   #cccccc;
+      --text:     #1a1a1a;
+      --dim:      #777777;
+      --neon:     #cc1a45;
+      --cyan:     #0077aa;
+      --amber:    #996600;
+      --green:    #1a8840;
+      --glow-r:   0 2px 8px rgba(180,20,60,.3);
+      --glow-c:   0 2px 8px rgba(0,100,160,.3);
+      --glow-a:   0 2px 8px rgba(140,90,0,.3);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #f4f4f4;
+      font-family: 'Short Stack', cursive;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ── HALFTONE ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(0,0,0,.07) 1px, transparent 1px);
+      background-size: 5px 5px;
+      pointer-events: none;
+      z-index: 9000;
+    }
+
+    /* ── SLIDES CONTAINER ── */
+    #reader {
+      position: fixed; inset: 0;
+    }
+
+    /* ── INDIVIDUAL SLIDE ── */
+    .slide {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    /* ACTIVE state */
+    .slide.active {
+      pointer-events: all;
+      opacity: 1;
+    }
+
+    /* ─── TRANSITIONS ─── */
+
+    /* Default: fade */
+    .slide { transition: opacity .6s ease, transform .6s ease; transform: scale(1); }
+
+    /* Outgoing: shrink & fade */
+    .slide.out-fade  { opacity: 0; transform: scale(.96); transition: opacity .45s ease, transform .45s ease; }
+    /* Incoming: grow from dark */
+    .slide.in-fade   { opacity: 0; transform: scale(1.04); }
+    .slide.in-fade.active { opacity: 1; transform: scale(1); }
+
+    /* Slide-left */
+    .slide.out-left  { opacity: 0; transform: translateX(-8%); transition: opacity .4s ease, transform .4s ease; }
+    .slide.in-right  { opacity: 0; transform: translateX(6%); }
+    .slide.in-right.active { opacity: 1; transform: translateX(0); }
+
+    /* Slam from top */
+    .slide.in-top    { opacity: 0; transform: translateY(-5%); }
+    .slide.in-top.active { opacity: 1; transform: translateY(0); }
+
+    /* Flash-cut — instant */
+    .slide.out-flash { opacity: 0; transition: opacity .15s ease; }
+    .slide.in-flash  { opacity: 0; }
+    .slide.in-flash.active { opacity: 1; transition: opacity .3s ease; }
+
+    /* ── BACKGROUND (all slides) ── */
+    .slide { background: #f4f4f4; }
+
+
+    /* ── LAYOUT GRIDS ── */
+    .layout {
+      max-width: 1100px;
+      width: 100%;
+      display: grid;
+      gap: 2.5rem;
+      align-items: center;
+    }
+    .l-50-50  { grid-template-columns: 1fr 1fr; }
+    .l-img-l  { grid-template-columns: 7fr 4fr; max-width: 1200px; }
+    .l-img-r  { grid-template-columns: 4fr 7fr; max-width: 1200px; }
+    #slide-4 .layout { grid-template-columns: 4fr 5fr; }
+    .l-center { grid-template-columns: 1fr; max-width: 680px; }
+    .l-wide   { grid-template-columns: 1fr; max-width: 760px; }
+
+    @media (max-width: 720px) {
+      .l-50-50, .l-img-l, .l-img-r { grid-template-columns: 1fr; gap: 1.2rem; }
+      .slide { padding: 1rem; }
+    }
+
+    /* ── PANEL FRAME ── */
+    .panel-wrap {
+      position: relative;
+    }
+
+    .panel-frame {
+      border: 3px solid rgba(0,0,0,.2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      background: #fff;
+      box-shadow: 4px 6px 20px rgba(0,0,0,.15);
+    }
+
+    .panel-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: brightness(.92) contrast(1.08) saturate(.85);
+    }
+
+    /* Vignette over image */
+    .panel-frame::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.12) 100%);
+      pointer-events: none;
+    }
+
+    /* Panel number badge */
+    .panel-num {
+      position: absolute;
+      top: -12px; right: -12px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Short Stack', cursive;
+      font-size: 1rem;
+      color: var(--bg);
+      z-index: 3;
+      font-weight: 700;
+    }
+    .panel-num { background: #8b1a1a; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+
+    /* ── TEXT SIDE ── */
+    .text-side {
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+    }
+
+    /* Scene heading */
+    .scene-heading {
+      font-family: 'Reenie Beanie', cursive;
+      font-size: clamp(2.4rem, 5vw, 4.2rem);
+      letter-spacing: 1px;
+      line-height: 1;
+      color: var(--text);
+    }
+    .scene-heading .accent { color: var(--text); }
+
+    /* Caption boxes */
+    .box {
+      border-radius: 3px;
+      padding: .85rem 1.1rem;
+      font-size: clamp(.82rem, 1.4vw, 1rem);
+      line-height: 1.65;
+      border-left: 3px solid;
+    }
+    .box-narr {
+      background: rgba(0,0,0,.04);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .box-thought {
+      background: rgba(0,0,0,.03);
+      border-color: var(--dim);
+      border-style: dashed;
+      color: var(--text);
+      font-style: italic;
+    }
+
+    .box-speech {
+      background: rgba(0,0,0,.04);
+      border-color: var(--border);
+      color: var(--text);
+      position: relative;
+    }
+    .box-speech::before {
+      content: '"';
+      font-family: 'Short Stack', cursive;
+      font-size: 3rem;
+      color: var(--text);
+      opacity: .12;
+      position: absolute;
+      top: -8px; left: 6px;
+      line-height: 1;
+    }
+
+    .box-closing {
+      background: rgba(0,0,0,.04);
+      border-color: var(--border);
+      color: var(--text);
+      font-weight: 700;
+      text-align: center;
+      font-size: clamp(.9rem, 1.5vw, 1.1rem);
+    }
+
+    /* ── TITLE SLIDE ── */
+    .title-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .title-eyebrow {
+      font-family: 'Short Stack', cursive;
+      font-size: .85rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .title-logo {
+      font-family: 'Short Stack', cursive;
+      font-size: clamp(4rem, 12vw, 8rem);
+      letter-spacing: 6px;
+      line-height: .95;
+      color: var(--text);
+    }
+    .title-logo .line2 { color: var(--neon); text-shadow: var(--glow-r); }
+    .title-logo .line3 { color: var(--cyan); text-shadow: var(--glow-c); }
+
+    .title-rule {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      box-shadow: var(--glow-r);
+    }
+
+    .title-subtitle {
+      font-family: 'Short Stack', cursive;
+      font-size: clamp(.9rem, 2vw, 1.3rem);
+      color: var(--amber);
+    }
+
+    .title-prompt {
+      font-size: .85rem;
+      color: var(--dim);
+      letter-spacing: 2px;
+      animation: blink 1.8s ease-in-out infinite;
+    }
+
+    /* Animated title border */
+    .title-border {
+      position: absolute;
+      inset: 2rem;
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    .title-border::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: 10%;
+      width: 30%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      box-shadow: var(--glow-r);
+    }
+    .title-border::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; right: 10%;
+      width: 30%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      box-shadow: var(--glow-c);
+    }
+
+    /* ── FINAL SLIDE SPECIFIC ── */
+    .final-wrap {
+      max-width: 780px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .final-heading {
+      font-family: 'Reenie Beanie', cursive;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      letter-spacing: 2px;
+      line-height: 1;
+      text-align: center;
+      color: var(--text);
+    }
+    .final-heading .accent { color: var(--text); }
+
+    .final-end {
+      font-family: 'Short Stack', cursive;
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: var(--text);
+      margin-top: .5rem;
+      letter-spacing: 4px;
+    }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      z-index: 8000;
+      pointer-events: none;
+      background: linear-gradient(to top, rgba(244,244,244,.95), transparent);
+    }
+
+    #slide-counter {
+      font-family: 'Short Stack', cursive;
+      font-size: 1rem;
+      color: var(--dim);
+      letter-spacing: 3px;
+    }
+    #slide-counter .current { color: var(--neon); font-size: 1.3rem; }
+
+    /* Progress dots */
+    #dots {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      border: 1px solid var(--dim);
+      transition: all .3s ease;
+    }
+    .dot.active {
+      background: var(--neon);
+      box-shadow: var(--glow-r);
+      transform: scale(1.3);
+    }
+
+    /* Click hint */
+    #click-hint {
+      font-size: .75rem;
+      color: var(--dim);
+      letter-spacing: 2px;
+      animation: blink 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Progress bar */
+    #progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon), var(--amber));
+      box-shadow: var(--glow-r);
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      z-index: 8001;
+    }
+
+    /* ── FLASH OVERLAY ── */
+    #flash {
+      position: fixed; inset: 0;
+      background: #1a1a1a;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 7000;
+    }
+    #flash.pop {
+      animation: flashPop .35s ease forwards;
+    }
+    @keyframes flashPop {
+      0%   { opacity: .18; }
+      100% { opacity: 0; }
+    }
+
+    /* ── SCAN LINE ── */
+    #scanlines {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 9100;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,.06) 2px,
+        rgba(0,0,0,.06) 4px
+      );
+    }
+
+    /* ── SLIDE-IN ANIMATIONS FOR ELEMENTS ── */
+    .slide.active .anim-img {
+      animation: popIn .55s cubic-bezier(.22,.68,0,1.2) forwards;
+    }
+    .slide.active .anim-text {
+      animation: slideUp .5s ease .18s both;
+    }
+    .slide.active .anim-sfx {
+      animation: slamIn .4s cubic-bezier(.22,.68,0,1.4) .35s both;
+    }
+    .slide.active .title-logo {
+      animation: popIn .6s cubic-bezier(.22,.68,0,1.2) .1s both;
+    }
+    .slide.active .title-rule,
+    .slide.active .title-eyebrow,
+    .slide.active .title-subtitle,
+    .slide.active .title-prompt {
+      animation: slideUp .5s ease .4s both;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.9) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slamIn {
+      from { opacity: 0; transform: scale(.5) rotate(-8deg); }
+      to   { opacity: 1; transform: scale(1) rotate(-2deg); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .2; }
+    }
+
+    /* ── BACK BUTTON ── */
+    #back-btn {
+      position: fixed;
+      bottom: 14px; left: 2rem;
+      pointer-events: all;
+      z-index: 8002;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      font-family: 'Short Stack', cursive;
+      font-size: .75rem;
+      letter-spacing: 2px;
+      padding: .3rem .8rem;
+      border-radius: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: color .2s, border-color .2s;
+    }
+    #back-btn:hover { color: var(--text); border-color: var(--dim); }
+    #back-btn.hidden { display: none; }
+
+  </style>
+</head>
+<body>
+
+<div id="flash"></div>
+<div id="scanlines"></div>
+<div id="progress"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <button id="back-btn" class="hidden" onclick="prevSlide(event)">← Back</button>
+  <div id="slide-counter"></div>
+  <div id="dots"></div>
+  <div id="click-hint">CLICK TO CONTINUE</div>
+</div>
+
+<!-- READER -->
+<div id="reader">
+
+  <!-- ── PANEL 1 ── -->
+  <div class="slide active" id="slide-1" data-in="in-right">
+    <div class="layout l-img-l">
+      <div class="panel-wrap anim-img">
+        <div class="panel-num">1</div>
+        <div class="panel-frame">
+          <img src="Test Images/Image (1).png" alt="Arriving at University" />
+        </div>
+      </div>
+      <div class="text-side anim-text">
+        <div class="scene-heading">A NEW <span class="accent">CHAPTER</span></div>
+        <div class="box box-narr">He had dreamed of this moment for years — the towering gates of the university, the crowds of students, the promise of something more.</div>
+        <div class="box box-thought">"This is it. This is where everything changes."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANEL 2 ── -->
+  <div class="slide" id="slide-2" data-in="in-right">
+    <div class="layout l-img-r">
+      <div class="text-side anim-text">
+        <div class="scene-heading">LOST IN <span class="accent">THE CROWD</span></div>
+        <div class="box box-narr">But the sea of strangers felt more like walls than doors. Everyone seemed to know exactly where they were going.</div>
+        <div class="box box-thought">"Am I the only one who feels completely invisible here?"</div>
+      </div>
+      <div class="panel-wrap anim-img">
+        <div class="panel-num">2</div>
+        <div class="panel-frame">
+          <img src="Test Images/Image (2).png" alt="Lost in the crowd" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANEL 3 ── -->
+  <div class="slide" id="slide-3" data-in="in-fade">
+    <div class="layout l-center" style="gap:1.5rem;">
+      <div class="panel-wrap anim-img" style="max-width:800px;margin:0 auto;width:100%">
+        <div class="panel-num">3</div>
+        <div class="panel-frame">
+          <img src="Test Images/Image (3).png" alt="Deep despair" />
+        </div>
+      </div>
+      <div class="text-side anim-text" style="gap:.8rem;">
+        <div class="scene-heading" style="text-align:center;">THE <span class="accent">WEIGHT</span></div>
+        <div class="box box-narr" style="text-align:center;">Days blurred into weeks. The loneliness settled into his chest like a stone. The dream he'd carried so long had grown quiet.</div>
+        <div class="box box-thought" style="text-align:center;">"Maybe I was never meant to be here."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANEL 4 ── -->
+  <div class="slide" id="slide-4" data-in="in-flash">
+    <div class="layout l-img-l">
+      <div class="panel-wrap anim-img">
+        <div class="panel-num">4</div>
+        <div class="panel-frame">
+          <img src="Test Images/Image (4).png" alt="Campus minister reaches out" />
+        </div>
+      </div>
+      <div class="text-side anim-text">
+        <div class="scene-heading">A HAND <span class="accent">EXTENDED</span></div>
+        <div class="box box-narr">Then — a voice cut through the noise. A campus minister had noticed what no one else had bothered to see.</div>
+        <div class="box box-speech">"Hey. You look like you could use a friend. Mind if I walk with you?"</div>
+        <div class="box box-narr">He didn't know what to say. But for the first time in months — he didn't say no.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANEL 5 ── -->
+  <div class="slide" id="slide-5" data-in="in-top">
+    <div class="final-wrap">
+      <div class="final-heading anim-text">THE <span class="accent">DREAM</span> BETWEEN</div>
+      <div class="panel-wrap anim-img" style="width:100%;max-width:360px;">
+        <div class="panel-num">5</div>
+        <div class="panel-frame">
+          <img src="Test Images/Image (5).png" alt="The Dream Between — community scenes" />
+        </div>
+      </div>
+      <div class="text-side anim-text" style="width:100%;gap:.8rem;">
+        <div class="box box-narr" style="text-align:center;">What followed wasn't a dramatic transformation — it was something quieter and more lasting. Resume workshops. Prayer circles. Potluck dinners. Serving others. In giving, something returned.</div>
+        <div class="box box-closing">The dream was never just about arriving.<br>It was always about what happens in between.</div>
+        <div class="final-end anim-sfx">✦ THE END ✦</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #reader -->
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const TOTAL  = slides.length;
+  let current  = 0;
+  let animating = false;
+
+  // ── TRANSITION MAP ──
+  const transitions = {
+    'in-fade':  { out: 'out-fade',  in: 'in-fade'  },
+    'in-right': { out: 'out-left',  in: 'in-right' },
+    'in-top':   { out: 'out-fade',  in: 'in-top'   },
+    'in-flash': { out: 'out-flash', in: 'in-flash'  },
+  };
+
+  // ── INIT HUD ──
+  const dotsEl    = document.getElementById('dots');
+  const counterEl = document.getElementById('slide-counter');
+  const progressEl= document.getElementById('progress');
+  const backBtn   = document.getElementById('back-btn');
+  const hintEl    = document.getElementById('click-hint');
+  const flashEl   = document.getElementById('flash');
+
+  // Build dots
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    dotsEl.appendChild(d);
+  }
+
+  function updateHUD() {
+    counterEl.innerHTML = `<span class="current">${current + 1}</span> / ${TOTAL}`;
+    progressEl.style.width = `${(current / (TOTAL - 1)) * 100}%`;
+
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+
+    backBtn.classList.toggle('hidden', current === 0);
+    hintEl.textContent = current === TOTAL - 1 ? '' : 'CLICK TO CONTINUE';
+  }
+
+  // ── NAVIGATE ──
+  function goTo(next) {
+    if (animating || next === current) return;
+    if (next < 0 || next >= TOTAL) return;
+    animating = true;
+
+    const fromSlide = slides[current];
+    const toSlide   = slides[next];
+    const tKey      = toSlide.dataset.in || 'in-fade';
+    const t         = transitions[tKey] || transitions['in-fade'];
+
+    // Flash for flash transition
+    if (tKey === 'in-flash') {
+      flashEl.classList.remove('pop');
+      void flashEl.offsetWidth;
+      flashEl.classList.add('pop');
+    }
+
+    // Outgoing
+    fromSlide.classList.add(t.out);
+
+    // Incoming — set class before making active for starting position
+    toSlide.classList.add(t.in);
+    toSlide.style.opacity = '0';
+    toSlide.style.pointerEvents = 'none';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // Activate incoming
+        fromSlide.classList.remove('active');
+        toSlide.classList.remove(t.in);
+        toSlide.classList.add('active');
+        toSlide.style.opacity = '';
+        toSlide.style.pointerEvents = '';
+
+        current = next;
+        updateHUD();
+
+        setTimeout(() => {
+          fromSlide.classList.remove(t.out, 'active');
+          animating = false;
+        }, 650);
+      });
+    });
+  }
+
+  // ── PAGE TURN SFX ──
+  let audioCtx = null;
+  function playPageTurn() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtx;
+      const duration = 0.18;
+      const bufferSize = ctx.sampleRate * duration;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        // White noise with a slight sweep envelope
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.8);
+      }
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      // Bandpass filter — papery mid-range
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1800, ctx.currentTime);
+      filter.frequency.linearRampToValueAtTime(600, ctx.currentTime + duration);
+      filter.Q.value = 0.8;
+
+      // Gentle gain
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+    } catch(e) {}
+  }
+
+  function nextSlide() { playPageTurn(); goTo(current + 1); }
+  function prevSlide(e) { if (e) e.stopPropagation(); playPageTurn(); goTo(current - 1); }
+
+  // ── CLICK ──
+  document.getElementById('reader').addEventListener('click', nextSlide);
+
+  // ── KEYBOARD ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
+      e.preventDefault(); nextSlide();
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); prevSlide(null);
+    }
+  });
+
+  // ── TOUCH SWIPE ──
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) { dx < 0 ? nextSlide() : prevSlide(null); }
+  });
+
+  // ── INIT ──
+  updateHUD();
+</script>
+</body>
+</html>

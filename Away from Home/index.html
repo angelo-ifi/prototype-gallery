@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWAY FROM HOME — An International Student RPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a14;
+    --panel: #12122a;
+    --panel2: #1a1a3a;
+    --border: #3a3a8a;
+    --accent: #7c7cfc;
+    --accent2: #fc9c00;
+    --accent3: #5cfc5c;
+    --accent4: #fc5c5c;
+    --text: #d0d0f0;
+    --dim: #6060a0;
+    --white: #ffffff;
+    --shadow: #000000aa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.08) 3px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.5) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  #game-wrapper {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .title-bar {
+    text-align: center;
+    font-size: 7px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    padding: 4px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 2px;
+  }
+
+  /* ---- HUD ---- */
+  #hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+    background: var(--panel);
+    border: 3px solid var(--border);
+    image-rendering: pixelated;
+  }
+
+  .hud-left { display: flex; flex-direction: column; gap: 6px; }
+  .hud-right { display: flex; flex-direction: column; gap: 4px; }
+
+  .player-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .player-sprite {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+
+  .player-name { font-size: 9px; color: var(--white); }
+  .player-sub { font-size: 6px; color: var(--dim); margin-top: 3px; }
+  .player-day { font-size: 7px; color: var(--accent2); margin-top: 4px; }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 7px;
+  }
+
+  .stat-label { color: var(--dim); width: 88px; flex-shrink: 0; font-size: 6px; }
+
+  .stat-bar-wrap {
+    flex: 1;
+    height: 10px;
+    background: #0a0a1a;
+    border: 2px solid #2a2a5a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-bar {
+    height: 100%;
+    transition: width 0.4s;
+    position: relative;
+  }
+
+  .stat-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 6px,
+      rgba(0,0,0,0.3) 6px,
+      rgba(0,0,0,0.3) 7px
+    );
+  }
+
+  .bar-spirit { background: #5cfc5c; }
+  .bar-homesick { background: #fc9c00; }
+  .bar-stress { background: #fc5c5c; }
+  .bar-social { background: #7c7cfc; }
+
+  .stat-val { font-size: 7px; color: var(--text); width: 22px; text-align: right; flex-shrink: 0; }
+
+  .money-display {
+    font-size: 8px;
+    color: var(--accent3);
+    text-align: right;
+    padding: 4px 0;
+  }
+
+  .location-display {
+    font-size: 7px;
+    color: var(--accent2);
+    text-align: right;
+  }
+
+  /* ---- SCENE ART ---- */
+  #scene-art {
+    background: var(--panel);
+    border: 3px solid var(--border);
+    border-top: none;
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #scene-canvas {
+    image-rendering: pixelated;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ---- DIALOGUE BOX ---- */
+  #dialogue-box {
+    background: var(--panel);
+    border: 3px solid var(--border);
+    border-top: none;
+    padding: 12px;
+    min-height: 100px;
+    position: relative;
+  }
+
+  .speaker-tag {
+    font-size: 7px;
+    color: var(--accent2);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  #dialogue-text {
+    font-size: 9px;
+    line-height: 1.8;
+    color: var(--white);
+    min-height: 48px;
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 8px;
+    height: 10px;
+    background: var(--white);
+    animation: blink 0.8s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ---- CHOICES ---- */
+  #choices {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 8px 8px;
+    background: var(--panel);
+    border: 3px solid var(--border);
+    border-top: none;
+  }
+
+  .choice-btn {
+    background: var(--panel2);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .choice-btn:hover {
+    background: #2a2a5a;
+    border-color: var(--accent);
+    color: var(--white);
+  }
+
+  .choice-btn:active { background: #3a3a8a; }
+
+  .choice-btn .choice-prefix {
+    color: var(--accent2);
+    flex-shrink: 0;
+  }
+
+  .choice-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ---- NOTIFICATION ---- */
+  #notification {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--panel2);
+    border: 3px solid var(--accent2);
+    padding: 10px 14px;
+    font-size: 7px;
+    color: var(--accent2);
+    max-width: 220px;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.3s, transform 0.3s;
+    line-height: 1.7;
+  }
+
+  #notification.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---- NAV MAP ---- */
+  #nav-map {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 8px;
+    background: var(--panel);
+    border: 3px solid var(--border);
+    border-top: none;
+  }
+
+  .nav-btn {
+    background: #0a0a1a;
+    border: 2px solid #2a2a5a;
+    color: var(--dim);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    padding: 5px 7px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #12122a;
+  }
+
+  /* ---- TITLE SCREEN ---- */
+  #title-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .title-logo {
+    text-align: center;
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.8; }
+    97% { opacity: 1; }
+    98% { opacity: 0.9; }
+  }
+
+  .title-main {
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px var(--accent), 0 0 40px #3a3aaa;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .title-sub {
+    font-size: 8px;
+    color: var(--accent2);
+    margin-top: 12px;
+    letter-spacing: 2px;
+  }
+
+  .title-desc {
+    font-size: 7px;
+    color: var(--dim);
+    text-align: center;
+    line-height: 2;
+    max-width: 400px;
+  }
+
+  .start-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    background: none;
+    border: 3px solid var(--accent);
+    color: var(--accent);
+    padding: 12px 24px;
+    cursor: pointer;
+    animation: pulse-border 1.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 0 transparent; }
+    50% { border-color: #aaaaff; color: #aaaaff; box-shadow: 0 0 12px #7c7cfc44; }
+  }
+
+  .press-any {
+    font-size: 7px;
+    color: var(--dim);
+    animation: blink 1s step-end infinite;
+  }
+
+  /* ---- CHAR CREATE ---- */
+  #char-create {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 998;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+  }
+
+  #char-create h2 {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .cc-label { font-size: 7px; color: var(--dim); margin-bottom: 4px; }
+
+  .cc-input {
+    background: var(--panel2);
+    border: 2px solid var(--border);
+    color: var(--white);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    padding: 8px 10px;
+    width: 240px;
+    outline: none;
+  }
+
+  .cc-input:focus { border-color: var(--accent); }
+
+  .cc-select-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 500px;
+  }
+
+  .cc-option {
+    border: 2px solid var(--border);
+    background: var(--panel2);
+    color: var(--dim);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.1s;
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .cc-option:hover, .cc-option.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #1a1a4a;
+  }
+
+  .cc-option .cc-emoji { font-size: 18px; display: block; margin-bottom: 6px; font-family: sans-serif; }
+
+  /* pixel art sprites via canvas */
+</style>
+</head>
+<body>
+
+<div id="notification"></div>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-logo">
+    <div class="title-main">AWAY<br>FROM<br>HOME</div>
+    <div class="title-sub">★ AN INTERNATIONAL STUDENT RPG ★</div>
+  </div>
+  <div class="title-desc">
+    A new semester. A new country.<br>
+    Navigate culture shock, homesickness,<br>
+    academic pressure, and the search<br>
+    for belonging — one choice at a time.
+  </div>
+  <button class="start-btn" onclick="showCharCreate()">▶  NEW GAME</button>
+  <div class="press-any">[ PRESS START ]</div>
+</div>
+
+<!-- CHARACTER CREATE -->
+<div id="char-create">
+  <h2>CREATE YOUR CHARACTER</h2>
+  <div>
+    <div class="cc-label">ENTER YOUR NAME:</div>
+    <input type="text" id="player-name-input" class="cc-input" placeholder="YOUR NAME" maxlength="12">
+  </div>
+  <div>
+    <div class="cc-label" style="text-align:center">WHERE ARE YOU FROM?</div>
+    <div class="cc-select-row" id="origin-select">
+      <div class="cc-option" data-val="Philippines" onclick="selectOrigin(this)"><span class="cc-emoji">🇵🇭</span>Philippines</div>
+      <div class="cc-option" data-val="China" onclick="selectOrigin(this)"><span class="cc-emoji">🇨🇳</span>China</div>
+      <div class="cc-option" data-val="India" onclick="selectOrigin(this)"><span class="cc-emoji">🇮🇳</span>India</div>
+      <div class="cc-option" data-val="Nigeria" onclick="selectOrigin(this)"><span class="cc-emoji">🇳🇬</span>Nigeria</div>
+      <div class="cc-option" data-val="Brazil" onclick="selectOrigin(this)"><span class="cc-emoji">🇧🇷</span>Brazil</div>
+      <div class="cc-option" data-val="South Korea" onclick="selectOrigin(this)"><span class="cc-emoji">🇰🇷</span>South Korea</div>
+    </div>
+  </div>
+  <div>
+    <div class="cc-label" style="text-align:center">YOUR MAJOR:</div>
+    <div class="cc-select-row" id="major-select">
+      <div class="cc-option" data-val="Computer Science" onclick="selectMajor(this)"><span class="cc-emoji">💻</span>Comp Sci</div>
+      <div class="cc-option" data-val="Business" onclick="selectMajor(this)"><span class="cc-emoji">📈</span>Business</div>
+      <div class="cc-option" data-val="Engineering" onclick="selectMajor(this)"><span class="cc-emoji">⚙️</span>Engineering</div>
+      <div class="cc-option" data-val="Arts" onclick="selectMajor(this)"><span class="cc-emoji">🎨</span>Arts</div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startGame()" style="margin-top:8px">▶  BEGIN JOURNEY</button>
+</div>
+
+<!-- MAIN GAME -->
+<div id="game-wrapper" style="display:none">
+  <div class="title-bar">★ AWAY FROM HOME — INTERNATIONAL STUDENT RPG ★</div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-left">
+      <div class="player-info">
+        <canvas id="player-sprite-canvas" class="player-sprite" width="16" height="16"></canvas>
+        <div>
+          <div class="player-name" id="hud-name">PLAYER</div>
+          <div class="player-sub" id="hud-origin">🌏 Origin: —</div>
+          <div class="player-sub" id="hud-major">📚 Major: —</div>
+          <div class="player-day" id="hud-day">📅 Day 1 of Semester</div>
+        </div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="stat-row">
+        <div class="stat-label">❤ SPIRIT</div>
+        <div class="stat-bar-wrap"><div class="stat-bar bar-spirit" id="bar-spirit" style="width:80%"></div></div>
+        <div class="stat-val" id="val-spirit">80</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">🏠 HOMESICK</div>
+        <div class="stat-bar-wrap"><div class="stat-bar bar-homesick" id="bar-homesick" style="width:30%"></div></div>
+        <div class="stat-val" id="val-homesick">30</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">📚 STRESS</div>
+        <div class="stat-bar-wrap"><div class="stat-bar bar-stress" id="bar-stress" style="width:20%"></div></div>
+        <div class="stat-val" id="val-stress">20</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">💬 SOCIAL</div>
+        <div class="stat-bar-wrap"><div class="stat-bar bar-social" id="bar-social" style="width:60%"></div></div>
+        <div class="stat-val" id="val-social">60</div>
+      </div>
+      <div class="money-display" id="hud-money">💵 $450.00</div>
+      <div class="location-display" id="hud-location">📍 Airport Terminal</div>
+    </div>
+  </div>
+
+  <!-- SCENE ART -->
+  <div id="scene-art">
+    <canvas id="scene-canvas" width="360" height="160"></canvas>
+  </div>
+
+  <!-- DIALOGUE BOX -->
+  <div id="dialogue-box">
+    <div class="speaker-tag" id="speaker-tag">▼ NARRATOR</div>
+    <div id="dialogue-text">Loading...</div>
+  </div>
+
+  <!-- CHOICES -->
+  <div id="choices"></div>
+
+  <!-- NAV MAP -->
+  <div id="nav-map">
+    <span style="font-size:6px;color:var(--dim);align-self:center;padding-right:4px">GO TO ▶</span>
+    <button class="nav-btn" id="nav-dorm" onclick="navigateTo('dorm')">🏠 DORM</button>
+    <button class="nav-btn" id="nav-campus" onclick="navigateTo('campus')">🏫 CAMPUS</button>
+    <button class="nav-btn" id="nav-cafe" onclick="navigateTo('cafeteria')">🍜 CAFETERIA</button>
+    <button class="nav-btn" id="nav-store" onclick="navigateTo('store')">🛒 STORE</button>
+    <button class="nav-btn" id="nav-phone" onclick="navigateTo('phone')">📞 CALL HOME</button>
+    <button class="nav-btn" id="nav-office" onclick="navigateTo('office')">🏛 INT'L OFFICE</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GAME STATE
+// ============================================================
+const G = {
+  name: 'PLAYER',
+  origin: 'Philippines',
+  major: 'Computer Science',
+  day: 1,
+  money: 450,
+  stats: { spirit: 80, homesick: 30, stress: 20, social: 60 },
+  flags: {
+    metRoommate: false,
+    registeredClasses: false,
+    calledMom: false,
+    foundFriends: false,
+    visitedOffice: false,
+    boughtFood: false,
+    dormTalked: 0,
+    campusVisits: 0,
+    phoneCallCount: 0,
+    storeVisits: 0,
+    officeVisits: 0,
+    cafeVisits: 0,
+    roommateRelation: 0, // 0-100
+    advisorHelped: false,
+  },
+  location: 'airport',
+  gameOver: false,
+};
+
+let selectedOrigin = '';
+let selectedMajor = '';
+let typingTimer = null;
+
+// ============================================================
+// SCENE DEFINITIONS
+// ============================================================
+const SCENES = {
+  airport: {
+    name: '✈ AIRPORT TERMINAL',
+    color: '#1a2a3a',
+    drawFn: drawAirport,
+    onEnter: enterAirport,
+  },
+  dorm: {
+    name: '🏠 DORM ROOM 204',
+    color: '#1a1a2a',
+    drawFn: drawDorm,
+    onEnter: enterDorm,
+  },
+  campus: {
+    name: '🏫 UNIVERSITY CAMPUS',
+    color: '#1a2a1a',
+    drawFn: drawCampus,
+    onEnter: enterCampus,
+  },
+  cafeteria: {
+    name: '🍜 CAMPUS CAFETERIA',
+    color: '#2a1a10',
+    drawFn: drawCafeteria,
+    onEnter: enterCafeteria,
+  },
+  store: {
+    name: '🛒 ASIAN GROCERY STORE',
+    color: '#2a2a10',
+    drawFn: drawStore,
+    onEnter: enterStore,
+  },
+  phone: {
+    name: '📞 CALLING HOME...',
+    color: '#0a1a0a',
+    drawFn: drawPhone,
+    onEnter: enterPhone,
+  },
+  office: {
+    name: '🏛 INTERNATIONAL OFFICE',
+    color: '#1a1a2a',
+    drawFn: drawOffice,
+    onEnter: enterOffice,
+  },
+};
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+function showCharCreate() {
+  document.getElementById('title-screen').style.display = 'none';
+  const cc = document.getElementById('char-create');
+  cc.style.display = 'flex';
+}
+
+function selectOrigin(el) {
+  document.querySelectorAll('#origin-select .cc-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedOrigin = el.dataset.val;
+}
+
+function selectMajor(el) {
+  document.querySelectorAll('#major-select .cc-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMajor = el.dataset.val;
+}
+
+function startGame() {
+  const nameInput = document.getElementById('player-name-input').value.trim().toUpperCase();
+  if (!nameInput) { showNotif('ENTER YOUR NAME!'); return; }
+  if (!selectedOrigin) { showNotif('CHOOSE YOUR ORIGIN!'); return; }
+  if (!selectedMajor) { showNotif('CHOOSE YOUR MAJOR!'); return; }
+
+  G.name = nameInput;
+  G.origin = selectedOrigin;
+  G.major = selectedMajor;
+
+  document.getElementById('char-create').style.display = 'none';
+  document.getElementById('game-wrapper').style.display = 'flex';
+
+  updateHUD();
+  drawPlayerSprite();
+  enterAirport();
+}
+
+// ============================================================
+// HUD
+// ============================================================
+function updateHUD() {
+  document.getElementById('hud-name').textContent = G.name;
+  document.getElementById('hud-origin').textContent = `🌏 ${G.origin}`;
+  document.getElementById('hud-major').textContent = `📚 ${G.major}`;
+  document.getElementById('hud-day').textContent = `📅 Day ${G.day} of Semester`;
+  document.getElementById('hud-money').textContent = `💵 $${G.money.toFixed(2)}`;
+  document.getElementById('hud-location').textContent = `📍 ${SCENES[G.location]?.name || G.location}`;
+
+  const s = G.stats;
+  ['spirit','homesick','stress','social'].forEach(k => {
+    const val = Math.max(0, Math.min(100, Math.round(s[k])));
+    document.getElementById(`bar-${k}`).style.width = val + '%';
+    document.getElementById(`val-${k}`).textContent = val;
+    // Color warning
+    if (k === 'spirit' && val < 25) {
+      document.getElementById(`bar-spirit`).style.background = '#fc5c5c';
+    }
+  });
+
+  if (!G.gameOver && G.stats.spirit <= 0) triggerGameOver();
+}
+
+function clampStats() {
+  for (const k in G.stats) {
+    G.stats[k] = Math.max(0, Math.min(100, G.stats[k]));
+  }
+}
+
+function modStats(delta, msg = null) {
+  for (const k in delta) {
+    if (G.stats[k] !== undefined) G.stats[k] += delta[k];
+  }
+  clampStats();
+  updateHUD();
+  if (msg) showNotif(msg);
+}
+
+function advanceDay(n = 1) {
+  G.day += n;
+  // Daily pressures
+  G.stats.homesick = Math.min(100, G.stats.homesick + 3 * n);
+  G.stats.stress = Math.min(100, G.stats.stress + 2 * n);
+  G.stats.spirit = Math.max(0, G.stats.spirit - (G.stats.homesick > 70 ? 3 : 1) * n);
+  updateHUD();
+  showNotif(`📅 DAY ${G.day}\n\nTime keeps moving...`);
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+let notifTimer = null;
+function showNotif(msg) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (notifTimer) clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ============================================================
+// DIALOGUE ENGINE
+// ============================================================
+function setDialogue(speaker, text, choices = []) {
+  document.getElementById('speaker-tag').textContent = `▼ ${speaker}`;
+  typeText(text, () => renderChoices(choices));
+}
+
+function typeText(text, onDone) {
+  if (typingTimer) clearInterval(typingTimer);
+  const el = document.getElementById('dialogue-text');
+  el.innerHTML = '';
+  let i = 0;
+  const chars = text.split('');
+  typingTimer = setInterval(() => {
+    if (i < chars.length) {
+      el.innerHTML = chars.slice(0, i + 1).join('').replace(/\n/g, '<br>') + '<span class="cursor-blink"></span>';
+      i++;
+    } else {
+      clearInterval(typingTimer);
+      el.innerHTML = text.replace(/\n/g, '<br>');
+      if (onDone) onDone();
+    }
+  }, 22);
+}
+
+function renderChoices(choices) {
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+  choices.forEach((c, i) => {
+    if (c.hidden) return;
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn' + (c.disabled ? ' disabled' : '');
+    const label = String.fromCharCode(65 + i); // A, B, C...
+    btn.innerHTML = `<span class="choice-prefix">[${label}]</span> ${c.text}`;
+    if (!c.disabled) btn.onclick = c.action;
+    box.appendChild(btn);
+  });
+}
+
+function clearChoices() {
+  document.getElementById('choices').innerHTML = '';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigateTo(loc) {
+  if (G.location === 'airport' && loc !== 'dorm') {
+    showNotif('First, go to your DORM ROOM!');
+    return;
+  }
+  G.location = loc;
+  updateHUD();
+  SCENES[loc].onEnter();
+  drawScene(loc);
+}
+
+function drawScene(loc) {
+  const canvas = document.getElementById('scene-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  SCENES[loc].drawFn(ctx, canvas.width, canvas.height);
+}
+
+// ============================================================
+// PIXEL ART DRAWING HELPERS
+// ============================================================
+function px(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+
+function drawStars(ctx, W, H) {
+  ctx.fillStyle = '#ffffff';
+  const positions = [[10,8],[40,4],[80,12],[120,6],[200,9],[280,5],[320,11],[350,7],[160,3],[240,13]];
+  positions.forEach(([x, y]) => ctx.fillRect(x, y, 1, 1));
+}
+
+function drawPixelText(ctx, text, x, y, color = '#ffffff', scale = 1) {
+  ctx.fillStyle = color;
+  ctx.font = `${8 * scale}px "Press Start 2P"`;
+  ctx.fillText(text, x, y);
+}
+
+// ============================================================
+// SCENE RENDERERS
+// ============================================================
+function drawAirport(ctx, W, H) {
+  // Sky + terminal bg
+  px(ctx, 0, 0, W, H, '#1a2a3a');
+  // Floor
+  px(ctx, 0, H * 0.6, W, H * 0.4, '#2a3a4a');
+  // Floor tiles
+  for (let i = 0; i < W; i += 24) {
+    px(ctx, i, H * 0.6, 1, H * 0.4, '#1a2a3a');
+  }
+  // Windows
+  for (let i = 0; i < 4; i++) {
+    const wx = 30 + i * 80;
+    px(ctx, wx, 15, 50, 60, '#1a3a5a');
+    px(ctx, wx + 2, 17, 46, 56, '#2a5a8a');
+    // Window cross
+    px(ctx, wx + 24, 17, 2, 56, '#1a3a5a');
+    px(ctx, wx + 2, 43, 46, 2, '#1a3a5a');
+    // Plane outside (small)
+    if (i === 1) {
+      px(ctx, wx + 5, 25, 35, 8, '#aaaacc');
+      px(ctx, wx + 18, 20, 10, 5, '#ccccee');
+      px(ctx, wx + 8, 33, 20, 5, '#aaaacc');
+    }
+  }
+  // Departure board
+  px(ctx, 10, 80, 150, 40, '#0a1a0a');
+  px(ctx, 12, 82, 146, 36, '#0a2a0a');
+  drawPixelText(ctx, 'DEPARTURES', 14, 95, '#5cfc5c', 0.55);
+  drawPixelText(ctx, 'ON TIME >', 14, 108, '#fc9c00', 0.55);
+  // Bench
+  px(ctx, 200, H * 0.58, 100, 8, '#5a4a3a');
+  px(ctx, 205, H * 0.66, 8, 16, '#5a4a3a');
+  px(ctx, 285, H * 0.66, 8, 16, '#5a4a3a');
+  // Player silhouette with suitcase
+  drawPlayerFigure(ctx, 270, H * 0.6);
+  px(ctx, 284, H * 0.67, 10, 14, '#3a6aaa');
+  px(ctx, 286, H * 0.81, 16, 4, '#2a2a2a');
+}
+
+function drawDorm(ctx, W, H) {
+  // Room bg
+  px(ctx, 0, 0, W, H, '#1a1a2a');
+  // Wall
+  px(ctx, 0, 0, W, H * 0.55, '#1e1e35');
+  // Wallpaper lines
+  for (let i = 0; i < H * 0.55; i += 20) {
+    px(ctx, 0, i, W, 1, '#22224a');
+  }
+  // Floor
+  px(ctx, 0, H * 0.6, W, H * 0.4, '#2a2a1a');
+  for (let i = 0; i < W; i += 30) {
+    px(ctx, i, H * 0.6, 1, H * 0.4, '#1a1a0a');
+  }
+  // Bed
+  px(ctx, 20, H * 0.48, 110, 14, '#3a2a1a');
+  px(ctx, 20, H * 0.45, 110, 6, '#5a4a3a');
+  px(ctx, 20, H * 0.45, 24, 18, '#4a3a6a');
+  px(ctx, 22, H * 0.47, 20, 14, '#6a5a9a');
+  // Desk
+  px(ctx, 200, H * 0.5, 130, 10, '#3a2a1a');
+  px(ctx, 200, H * 0.6, 10, 30, '#3a2a1a');
+  px(ctx, 320, H * 0.6, 10, 30, '#3a2a1a');
+  // Laptop on desk
+  px(ctx, 230, H * 0.38, 50, 32, '#2a2a3a');
+  px(ctx, 232, H * 0.40, 46, 28, '#1a5a8a');
+  px(ctx, 234, H * 0.42, 42, 24, '#0a3a6a');
+  px(ctx, 244, H * 0.49, 20, 3, '#1a1a2a');
+  // Window
+  px(ctx, 290, 10, 55, 70, '#1a3a5a');
+  px(ctx, 292, 12, 51, 66, '#0a2a4a');
+  px(ctx, 317, 12, 2, 66, '#1a3a5a');
+  px(ctx, 292, 44, 51, 2, '#1a3a5a');
+  // Moon outside
+  px(ctx, 305, 20, 16, 16, '#fcfc9c');
+  px(ctx, 308, 18, 8, 20, '#fcfc9c');
+  px(ctx, 309, 22, 12, 8, '#0a2a4a');
+  // Player
+  drawPlayerFigure(ctx, 140, H * 0.52);
+  // Poster on wall
+  px(ctx, 60, 10, 45, 55, '#3a1a2a');
+  px(ctx, 62, 12, 41, 51, '#5a2a4a');
+  drawPixelText(ctx, 'HOME', 64, 35, '#fc9c00', 0.5);
+}
+
+function drawCampus(ctx, W, H) {
+  // Sky
+  px(ctx, 0, 0, W, H * 0.55, '#1a2a1a');
+  // Stars
+  drawStars(ctx, W, H * 0.5);
+  // Grass
+  px(ctx, 0, H * 0.55, W, H * 0.1, '#2a4a1a');
+  // Path
+  px(ctx, 100, H * 0.65, 200, H * 0.35, '#3a3a2a');
+  // Building 1
+  px(ctx, 10, 20, 100, 120, '#2a2a4a');
+  px(ctx, 15, 25, 90, 115, '#1a1a3a');
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 3; col++) {
+      const wx = 22 + col * 28, wy = 35 + row * 25;
+      px(ctx, wx, wy, 18, 18, '#1a4a6a');
+      px(ctx, wx + 2, wy + 2, 14, 14, '#2a6a9a');
+    }
+  }
+  // Building 2 (taller)
+  px(ctx, 130, 10, 80, 130, '#2a3a2a');
+  px(ctx, 135, 15, 70, 125, '#1a2a1a');
+  px(ctx, 155, 5, 40, 8, '#3a3a2a'); // flag pole top
+  px(ctx, 173, 5, 20, 6, '#fc5c5c'); // flag
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 2; col++) {
+      const wx = 140 + col * 30, wy = 25 + row * 22;
+      px(ctx, wx, wy, 18, 16, '#2a5a3a');
+    }
+  }
+  // Trees
+  [[240, 80], [280, 70], [320, 85], [340, 75]].forEach(([x, y]) => {
+    px(ctx, x + 6, y + 30, 8, 30, '#4a3a2a');
+    px(ctx, x, y, 20, 30, '#1a5a1a');
+    px(ctx, x + 4, y - 8, 12, 15, '#2a6a2a');
+  });
+  // Students silhouettes
+  [[200, 120], [240, 110]].forEach(([x, y]) => drawPlayerFigure(ctx, x, y, '#5a5a7a'));
+  drawPlayerFigure(ctx, 175, 115);
+}
+
+function drawCafeteria(ctx, W, H) {
+  px(ctx, 0, 0, W, H, '#2a1a10');
+  // Ceiling lights
+  for (let i = 0; i < 4; i++) {
+    px(ctx, 40 + i * 80, 0, 30, 8, '#5a4a3a');
+    px(ctx, 50 + i * 80, 8, 10, 3, '#fcfc9c');
+    // Light cone
+    ctx.fillStyle = 'rgba(252,252,100,0.05)';
+    ctx.beginPath();
+    ctx.moveTo(55 + i * 80, 11);
+    ctx.lineTo(30 + i * 80, H);
+    ctx.lineTo(80 + i * 80, H);
+    ctx.fill();
+  }
+  // Floor
+  px(ctx, 0, H * 0.65, W, H * 0.35, '#3a2a1a');
+  for (let i = 0; i < W; i += 28) px(ctx, i, H * 0.65, 1, H * 0.35, '#2a1a0a');
+  // Food counter
+  px(ctx, 0, H * 0.4, W * 0.45, 20, '#5a3a2a');
+  px(ctx, 0, H * 0.4, W * 0.45, 4, '#7a5a3a');
+  // Food trays
+  [[20, H*0.43], [55, H*0.43], [90, H*0.43]].forEach(([x, y]) => {
+    px(ctx, x, y, 28, 12, '#3a2a1a');
+    px(ctx, x + 3, y + 2, 22, 8, '#fc9c00');
+  });
+  // Tables
+  [[10, H*0.7], [120, H*0.7], [230, H*0.7], [300, H*0.7]].forEach(([x, y]) => {
+    px(ctx, x, y, 60, 6, '#5a3a2a');
+    px(ctx, x + 8, y + 6, 6, 20, '#3a2a1a');
+    px(ctx, x + 46, y + 6, 6, 20, '#3a2a1a');
+  });
+  // Characters at table
+  drawPlayerFigure(ctx, 245, H * 0.7, '#5a6a8a');
+  drawPlayerFigure(ctx, 275, H * 0.68, '#6a4a3a');
+  drawPlayerFigure(ctx, 185, H * 0.72);
+}
+
+function drawStore(ctx, W, H) {
+  px(ctx, 0, 0, W, H, '#1a1a0a');
+  // Shelves
+  for (let row = 0; row < 3; row++) {
+    px(ctx, 10, 15 + row * 45, W - 20, 5, '#5a4a2a');
+    // Products on shelf
+    for (let col = 0; col < 18; col++) {
+      const colors = ['#fc5c5c','#fc9c00','#fcfc5c','#5cfc5c','#5cccfc','#fc5cfc','#aaaaaa','#ffccaa'];
+      px(ctx, 14 + col * 18, 22 + row * 45, 12, 33, colors[(col + row) % colors.length]);
+      px(ctx, 15 + col * 18, 24 + row * 45, 10, 10, colors[(col * 2 + row) % colors.length]);
+    }
+  }
+  // Floor
+  px(ctx, 0, H * 0.75, W, H * 0.25, '#2a2a1a');
+  for (let i = 0; i < W; i += 36) px(ctx, i, H * 0.75, 1, H * 0.25, '#1a1a0a');
+  // Counter
+  px(ctx, W - 80, H * 0.55, 70, 50, '#3a2a1a');
+  px(ctx, W - 78, H * 0.53, 66, 4, '#5a4a2a');
+  // Cashier
+  drawPlayerFigure(ctx, W - 50, H * 0.57, '#4a6a4a');
+  // Player browsing
+  drawPlayerFigure(ctx, 120, H * 0.74);
+  // Sign
+  px(ctx, 10, H * 0.76, 120, 20, '#1a3a1a');
+  drawPixelText(ctx, 'ASIA MART', 14, H * 0.88, '#5cfc5c', 0.55);
+}
+
+function drawPhone(ctx, W, H) {
+  px(ctx, 0, 0, W, H, '#050f05');
+  // Phone screen glow
+  const cx = W / 2, cy = H / 2;
+  ctx.fillStyle = 'rgba(0,200,0,0.06)';
+  for (let r = 60; r > 0; r -= 10) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 20, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Phone shape
+  px(ctx, cx - 35, cy - 65, 70, 120, '#1a1a1a');
+  px(ctx, cx - 32, cy - 60, 64, 110, '#0a1a0a');
+  // Screen content
+  px(ctx, cx - 28, cy - 55, 56, 80, '#0a2a0a');
+  // Video call silhouette (family)
+  px(ctx, cx - 22, cy - 48, 44, 60, '#0a3a0a');
+  // Two people silhouettes
+  px(ctx, cx - 18, cy - 10, 14, 28, '#1a5a1a');
+  px(ctx, cx - 12, cy - 22, 10, 14, '#1a5a1a');
+  px(ctx, cx + 4, cy - 10, 14, 28, '#1a5a1a');
+  px(ctx, cx + 7, cy - 22, 10, 14, '#1a5a1a');
+  // Call bar
+  px(ctx, cx - 28, cy + 24, 56, 10, '#0a1a0a');
+  drawPixelText(ctx, 'VIDEO CALL', cx - 28, cy + 31, '#5cfc5c', 0.5);
+  // Signal bars
+  for (let i = 0; i < 4; i++) {
+    px(ctx, cx - 22 + i * 8, cy - 52 - i * 3, 5, 5 + i * 3, i < 3 ? '#5cfc5c' : '#2a4a2a');
+  }
+  // Speaker at top
+  px(ctx, cx - 10, cy - 62, 20, 4, '#2a2a2a');
+  // Home button
+  px(ctx, cx - 8, cy + 48, 16, 10, '#1a1a1a');
+  px(ctx, cx - 5, cy + 50, 10, 6, '#2a2a2a');
+}
+
+function drawOffice(ctx, W, H) {
+  px(ctx, 0, 0, W, H, '#1a1a2a');
+  px(ctx, 0, 0, W, H * 0.55, '#12122a');
+  // Floor
+  px(ctx, 0, H * 0.6, W, H * 0.4, '#2a2a3a');
+  for (let i = 0; i < W; i += 30) px(ctx, i, H * 0.6, 1, H * 0.4, '#1a1a2a');
+  // Desk
+  px(ctx, 60, H * 0.48, 220, 12, '#3a2a1a');
+  px(ctx, 65, H * 0.6, 10, 30, '#3a2a1a');
+  px(ctx, 265, H * 0.6, 10, 30, '#3a2a1a');
+  // Stacks of papers
+  [[80, H*0.43], [130, H*0.44], [170, H*0.45]].forEach(([x, y]) => {
+    for (let i = 0; i < 5; i++) px(ctx, x, y + i * 2, 30, 2, i % 2 === 0 ? '#fcfcdc' : '#dcdcbc');
+  });
+  // Computer
+  px(ctx, 220, H * 0.3, 50, 38, '#2a2a4a');
+  px(ctx, 222, H * 0.32, 46, 34, '#1a1a6a');
+  px(ctx, 230, H * 0.48, 20, 4, '#2a2a3a');
+  // Advisor
+  drawPlayerFigure(ctx, 195, H * 0.5, '#6a4a7a');
+  // Flags on wall
+  [[10, 10], [35, 10], [60, 10], [85, 10], [110, 10]].forEach(([x, y]) => {
+    px(ctx, x + 8, y, 2, 40, '#5a4a3a');
+    px(ctx, x, y, 20, 14, '#fc5c5c');
+  });
+  // Sign
+  px(ctx, 120, 10, 200, 20, '#1a2a5a');
+  drawPixelText(ctx, 'INTERNATIONAL STUDENT OFFICE', 124, 23, '#7c7cfc', 0.45);
+  // Player
+  drawPlayerFigure(ctx, 140, H * 0.54);
+}
+
+function drawPlayerFigure(ctx, x, y, color = '#7c7cfc') {
+  // Head
+  px(ctx, x, y - 16, 8, 8, color);
+  // Body
+  px(ctx, x - 2, y - 8, 12, 12, color);
+  // Legs
+  px(ctx, x - 2, y + 4, 4, 10, color);
+  px(ctx, x + 6, y + 4, 4, 10, color);
+  // Arms
+  px(ctx, x - 5, y - 8, 3, 10, color);
+  px(ctx, x + 10, y - 8, 3, 10, color);
+}
+
+function drawPlayerSprite() {
+  const canvas = document.getElementById('player-sprite-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#7c7cfc';
+  // Head
+  ctx.fillRect(4, 0, 8, 8);
+  // Body
+  ctx.fillRect(2, 8, 12, 6);
+  // Legs
+  ctx.fillStyle = '#5c5ccc';
+  ctx.fillRect(2, 14, 4, 4);
+  ctx.fillRect(10, 14, 4, 4);
+  // Backpack
+  ctx.fillStyle = '#fc9c00';
+  ctx.fillRect(12, 8, 4, 6);
+}
+
+// ============================================================
+// SCENE LOGIC — AIRPORT
+// ============================================================
+function enterAirport() {
+  G.location = 'airport';
+  drawScene('airport');
+  updateHUD();
+  setDialogue('✈ NARRATOR', `You step off the plane, heart pounding.\n\nYour bags are heavy. The airport is\nlouder than you expected. Signs are\nall in English. You can't find your\ngate contact anywhere...\n\n"Welcome to America, ${G.name}."`, [
+    {
+      text: 'Look for the university pickup sign',
+      action: () => airportScene2()
+    },
+    {
+      text: 'Call the international office number',
+      action: () => airportCallOffice()
+    },
+    {
+      text: 'Sit down and take a deep breath first',
+      action: () => airportBreath()
+    }
+  ]);
+}
+
+function airportScene2() {
+  modStats({ spirit: 3, homesick: 5 });
+  setDialogue('✈ NARRATOR', `After 10 minutes of wandering, you spot\na cardboard sign: "UNIVERSITY STUDENTS"\n\nA bored-looking grad student is holding\nit. He sees you and nods.`, [
+    {
+      text: '"Hi, I\'m from ' + G.origin + ', is this the pickup?"',
+      action: () => airportMeetDriver()
+    },
+    {
+      text: '[Wave awkwardly and walk toward him]',
+      action: () => airportWave()
+    }
+  ]);
+}
+
+function airportCallOffice() {
+  modStats({ stress: -5 }, '📞 Smart thinking — calling ahead!');
+  setDialogue('📞 INT\'L OFFICE (VOICEMAIL)', `"You have reached the Office of\nInternational Student Services.\n\nOur hours are Monday-Friday,\n9am to 5pm. If this is an emergency—"\n\n...It's 6:30pm on a Saturday.`, [
+    {
+      text: '[Hang up. Look for the pickup sign.]',
+      action: () => airportScene2()
+    }
+  ]);
+}
+
+function airportBreath() {
+  modStats({ spirit: 5, stress: -5 }, '🧘 You breathe. That helps.');
+  setDialogue('💭 YOUR THOUGHTS', `You sit on a cold bench.\n\nYou think about home. Your mom's\ncooking. Your bed. Your friends.\n\nYou came this far. You can do this.\n\n...You should probably find your ride.`, [
+    {
+      text: '[Stand up. Find the pickup sign.]',
+      action: () => airportScene2()
+    }
+  ]);
+}
+
+function airportMeetDriver() {
+  setDialogue('🚗 MARCUS (GRAD STUDENT)', `"Yep, that's me. Marcus. Comp Sci PhD.\n\nFirst time here? Don't worry, it's not\nas scary as it looks. Well—actually\nyeah it kind of is. But you'll figure\nit out. Everyone does."\n\nHe picks up one of your bags\nwithout asking. You appreciate that.`, [
+    {
+      text: '"Thank you. How far is the dorms?"',
+      action: () => airportRide()
+    },
+    {
+      text: '"Is there any food on the way?"',
+      action: () => airportFood()
+    }
+  ]);
+}
+
+function airportWave() {
+  setDialogue('🚗 MARCUS (GRAD STUDENT)', `"Hey! You with the university?\nYeah? Cool. I'm Marcus."\n\nHe extends his hand. You shake it.\nFirst American handshake.\n\n"Bags? Let's get out of here.\nFlight delays got everyone bunched up."`, [
+    {
+      text: '[Follow Marcus to the car]',
+      action: () => airportRide()
+    }
+  ]);
+}
+
+function airportFood() {
+  G.money -= 12;
+  modStats({ spirit: 8, stress: -5 }, '🍔 First US meal! $12 spent.');
+  setDialogue('🍔 NARRATOR', `Marcus stops at a drive-through.\nYou get a burger. It's huge.\nMuch bigger than back home.\n\nIt's not your mom's cooking, but\nyou're hungry enough that it doesn't\nmatter right now.\n\nYou spent $12. Your wallet winces.`, [
+    {
+      text: '[Continue to dorm]',
+      action: () => airportRide()
+    }
+  ]);
+}
+
+function airportRide() {
+  advanceDay(0);
+  setDialogue('🚗 IN THE CAR', `The city lights blur past the window.\n\nMarcus tells you about the campus,\nthe dining halls, which professors\nare harsh, which buses run late...\n\nYou nod and try to absorb everything.\nYou're exhausted but can't sleep.\n\nYou wonder if you made the right choice.`, [
+    {
+      text: '"What do you miss most about home?"',
+      action: () => airportTalkMarcus()
+    },
+    {
+      text: '[Look out the window quietly]',
+      action: () => airportArriveDorm()
+    }
+  ]);
+}
+
+function airportTalkMarcus() {
+  modStats({ social: 10, homesick: 5 }, '🤝 Connection made!');
+  setDialogue('🚗 MARCUS', `Marcus gets quiet for a second.\n\n"...My grandma's cooking. Specifically\nher jollof rice. Nothing here comes\nclose. I've tried every place."\n\nYou look at him differently now.\n\n"First year is the hardest. By second\nyear you find your people. Promise."`, [
+    {
+      text: '"That\'s actually really helpful. Thanks."',
+      action: () => airportArriveDorm()
+    }
+  ]);
+}
+
+function airportArriveDorm() {
+  showNotif('📍 ARRIVED: Dorm Room 204');
+  G.location = 'dorm';
+  updateHUD();
+  drawScene('dorm');
+  setDialogue('🏠 NARRATOR', `Room 204. Pine Hall.\n\nA twin bed. A wooden desk. A window\nfacing a parking lot. A roommate's\nside — empty, but clearly lived-in.\n\nThis is home now.\n\nYou drop your bags. You sit on the bed.\nIt creaks loudly.`, [
+    {
+      text: 'Explore the room',
+      action: () => dormExplore()
+    },
+    {
+      text: 'Unpack your bags',
+      action: () => dormUnpack()
+    },
+    {
+      text: 'Lie down and cry a little. That\'s okay.',
+      action: () => dormCry()
+    }
+  ]);
+}
+
+// ============================================================
+// DORM SCENE
+// ============================================================
+function enterDorm() {
+  if (G.location === 'airport') return;
+  drawScene('dorm');
+  updateHUD();
+
+  if (G.flags.dormTalked === 0) {
+    dormFirstVisit();
+  } else if (!G.flags.metRoommate) {
+    dormMeetRoommate();
+  } else {
+    dormHub();
+  }
+}
+
+function dormFirstVisit() {
+  G.flags.dormTalked++;
+  setDialogue('🏠 YOUR ROOM', `You're back in the room.\n\nYour stuff is half-unpacked. Your\nroommate's side has a gaming chair,\nposters, and a mini-fridge.\n\nYou haven't talked to them yet.\n\nWhat do you do?`, [
+    {
+      text: 'Wait for roommate to come back',
+      action: () => dormMeetRoommate()
+    },
+    {
+      text: 'Organize your desk',
+      action: () => dormDesk()
+    },
+    {
+      text: 'Look up cheap local food on your phone',
+      action: () => dormFood()
+    }
+  ]);
+}
+
+function dormExplore() {
+  modStats({ stress: -3, social: 2 });
+  setDialogue('🏠 ROOM 204', `You poke around.\n\nThere's a bulletin board with flyers:\n• FREE PIZZA: International Student\n  Welcome Event (this Friday!)\n• Tutoring available at the library\n• Lost cat flyer (someone drew it\n  VERY seriously)\n\nYour roommate's name tag on their\ndesk says: TYLER`, [
+    {
+      text: 'Note the welcome event',
+      action: () => { G.flags.notedEvent = true; modStats({ social: 5 }, '📌 NOTED: Int\'l Student Welcome Event'); dormHub(); }
+    },
+    {
+      text: 'Sit at your desk and rest',
+      action: () => dormHub()
+    }
+  ]);
+}
+
+function dormUnpack() {
+  modStats({ spirit: 5, homesick: -5 }, '📦 Unpacking helps. This is YOUR space now.');
+  setDialogue('🏠 UNPACKING', `You pull things out carefully.\n\nA framed photo of your family.\nA small figurine from home.\nYour high school graduation sash.\n\nYou set the photo on the desk.\nIt makes the room feel less empty.\n\nA little.`, [
+    {
+      text: '[Continue settling in]',
+      action: () => dormHub()
+    }
+  ]);
+}
+
+function dormCry() {
+  modStats({ stress: -15, homesick: 10, spirit: 5 }, '😭 Let it out. It\'s okay.');
+  setDialogue('💭 YOUR THOUGHTS', `You cry for about seven minutes.\n\nNobody sees. Nobody judges.\n\nSomething about crying in a new place\nmakes you feel both more lost and more\nready at the same time.\n\nYou wipe your face. You check your\nphone — 37 WhatsApp messages from\nyour family group chat.`, [
+    {
+      text: 'Read the messages',
+      action: () => dormMessages()
+    },
+    {
+      text: 'Close the app. Too much right now.',
+      action: () => { modStats({ stress: 5 }); dormHub(); }
+    }
+  ]);
+}
+
+function dormMessages() {
+  modStats({ spirit: 10, homesick: 15 }, '💌 Family messages are everything and painful.');
+  const msgs = {
+    Philippines: '"Anak, did you arrive safely?? Call us!! -Mom"\n"Be careful with your documents!! -Dad"\n"Send pics of dorm!!! -little sister"\n"Eat properly ha!! -Tita Cora"',
+    China: '"Did you eat? Call when you land! -Mom"\n"Study hard, we are proud of you -Dad"\n"wohoo!! update me!! -cousin"\n"Use the medicine in your bag -Grandma"',
+    India: '"Beta arrived? Eat and call! -Mom"\n"Study well, our hopes with you -Dad"\n"send selfie!! -akka"\n"don\'t forget to pray -Nani"',
+    Nigeria: '"My child! Are you there? -Mama"\n"Remember what we talked about -Daddy"\n"bro update me!! -Tunde"\n"Eat well and don\'t disgrace us -Uncle Emeka"',
+    Brazil: '"Chegou bem?? me liga!! -Mae"\n"Vai arrasar! -Pai"\n"manda foto do quarto!! -irmã"\n"fica com Deus -Vovó"',
+    'South Korea': '"도착했어? 밥 먹었어? 전화해 -엄마"\n"열심히 해라 -아빠"\n"업뎃!!! -친구"\n"몸 조심해 -할머니"',
+  };
+  const msg = msgs[G.origin] || msgs.Philippines;
+  setDialogue('💌 FAMILY GROUP CHAT', msg, [
+    {
+      text: '"I\'m okay, just arrived. Love you all."',
+      action: () => { modStats({ spirit: 8, homesick: 5 }); showNotif('📱 Message sent!'); dormHub(); }
+    },
+    {
+      text: '[Close the chat. Not ready to reply yet.]',
+      action: () => { modStats({ stress: 8 }); dormHub(); }
+    }
+  ]);
+}
+
+function dormDesk() {
+  modStats({ stress: -5, spirit: 3 });
+  G.flags.registeredClasses = false;
+  setDialogue('💻 YOUR DESK', `You set up your laptop.\n\nThe university portal requires you to\nregister for classes — but it keeps\nthrowing an error.\n\n"Please contact your advisor to complete\nregistration." Error code: B403.\n\nOf course. Of course it does.`, [
+    {
+      text: 'Google the error code',
+      action: () => { modStats({ stress: 5 }); setDialogue('💻 GOOGLE RESULTS', 'The top result is a 5-year-old forum\npost from someone with the same issue.\n\nThe only reply says:\n\n"Solved! Just go to the office."\n\nUseful. Very useful.', [{ text: '[Close laptop. Go to the office later.]', action: dormHub }]); }
+    },
+    {
+      text: 'Email the advisor and go to sleep',
+      action: () => { modStats({ stress: -5, homesick: 3 }, '📧 Email sent. Rest is important.'); advanceDay(1); dormHub(); }
+    }
+  ]);
+}
+
+function dormFood() {
+  setDialogue('📱 SEARCHING...', `You search: "cheap food near campus"\n\n★ Mickey\'s Diner — $8 burgers, 0.3mi\n★ Panda Express — $10 plates, 0.5mi\n★ Asia Mart — groceries, 0.8mi\n★ Gas station hot dogs — please don\'t\n\nYou notice Asia Mart has good reviews\nmentioning "ingredients from back home"`, [
+    {
+      text: 'Mark Asia Mart (STORE) on your mental map',
+      action: () => { G.flags.foundStore = true; modStats({ spirit: 3 }, '🗺 STORE unlocked!'); dormHub(); }
+    },
+    {
+      text: 'Order delivery right now ($22 with fees)',
+      action: () => { G.money -= 22; modStats({ spirit: 10, homesick: -5 }, '🍕 Comfort food: $22 spent.'); updateHUD(); dormHub(); }
+    }
+  ]);
+}
+
+function dormMeetRoommate() {
+  if (G.flags.metRoommate) { dormHub(); return; }
+  drawScene('dorm');
+  setDialogue('🚪 THE DOOR OPENS', `The door bangs open.\n\nA tall guy in a basketball jersey\nstrolls in. He stops when he sees you.\n\n"Oh — hey! You\'re the new roommate?\nI\'m Tyler. Tyler Chen. Pre-law."\n\nHe grins and puts out a fist bump.`, [
+    {
+      text: '[Fist bump] "Nice to meet you. I\'m ' + G.name + '."',
+      action: () => tylerFriendly()
+    },
+    {
+      text: '"Hi. I\'m still settling in, sorry for the mess."',
+      action: () => tylerPolite()
+    },
+    {
+      text: '[Wave] "Hey." [Go back to unpacking]',
+      action: () => tylerCold()
+    }
+  ]);
+}
+
+function tylerFriendly() {
+  G.flags.metRoommate = true;
+  G.flags.roommateRelation = 60;
+  modStats({ social: 15, homesick: -10 }, '🤝 Tyler relationship: GOOD START!');
+  setDialogue('👤 TYLER', `"${G.name}? Solid name. Where you from?\n\nNo way — ${G.origin}?! My cousin studied\nabroad there for a semester. Said the\nfood was incredible.\n\nHey — you should come to my friend\ngroup's hangout tonight. Just a few\npeople, board games. Low-key."\n\nYour homesickness dips slightly.`, [
+    {
+      text: '"I\'d love that. What time?"',
+      action: () => { modStats({ social: 10, homesick: -15 }, '🎮 Plans made!'); G.flags.socialInvite = true; dormHub(); }
+    },
+    {
+      text: '"Maybe next time — I\'m exhausted from travel."',
+      action: () => { modStats({ stress: -5 }); dormHub(); }
+    }
+  ]);
+}
+
+function tylerPolite() {
+  G.flags.metRoommate = true;
+  G.flags.roommateRelation = 40;
+  modStats({ social: 5 }, '🤝 Tyler relationship: OKAY');
+  setDialogue('👤 TYLER', `"No worries, I should\'ve given you more\nwarning I was coming back.\n\nHey, house rules: I usually study\n10pm-1am, so I'll use headphones.\nJust let me know if anything bothers you."\n\nHe seems decent.`, [
+    {
+      text: '"Sounds good. Same for me, I\'ll be considerate."',
+      action: () => dormHub()
+    }
+  ]);
+}
+
+function tylerCold() {
+  G.flags.metRoommate = true;
+  G.flags.roommateRelation = 20;
+  modStats({ social: -5, stress: 5 });
+  setDialogue('👤 TYLER', `Tyler shrugs and goes to his side.\n\nThe room is quiet for a while.\n\nAn awkward silence you could cut\nwith a butter knife.\n\nHe puts on his headphones.\nYou stare at your ceiling.\n\nThis could go better.`, [
+    {
+      text: '[Make a note to try again tomorrow]',
+      action: () => dormHub()
+    }
+  ]);
+}
+
+function dormHub() {
+  setDialogue('🏠 YOUR ROOM', `Room 204. Your temporary universe.\n\nSpirit: ${Math.round(G.stats.spirit)} | Homesick: ${Math.round(G.stats.homesick)}\nStress: ${Math.round(G.stats.stress)} | Social: ${Math.round(G.stats.social)}\nMoney: $${G.money.toFixed(2)}\n\nWhere do you want to go?`, [
+    {
+      text: 'Rest here (recover stress, -social)',
+      action: () => { modStats({ stress: -10, social: -5, spirit: 5 }, '😴 Rested. Good.'); advanceDay(1); dormHub(); }
+    },
+    {
+      text: 'Go to Campus',
+      action: () => navigateTo('campus')
+    },
+    {
+      text: 'Go to Cafeteria',
+      action: () => navigateTo('cafeteria')
+    },
+    {
+      text: 'Go to Store',
+      action: () => navigateTo('store')
+    },
+    {
+      text: 'Call Home',
+      action: () => navigateTo('phone')
+    }
+  ]);
+}
+
+// ============================================================
+// CAMPUS SCENE
+// ============================================================
+function enterCampus() {
+  G.flags.campusVisits++;
+  drawScene('campus');
+  updateHUD();
+
+  if (!G.flags.registeredClasses && G.flags.campusVisits === 1) {
+    campusFirstDay();
+  } else if (G.flags.campusVisits === 2 && !G.flags.foundFriends) {
+    campusEncounter();
+  } else {
+    campusHub();
+  }
+}
+
+function campusFirstDay() {
+  setDialogue('🏫 CAMPUS — FIRST DAY', `The campus is enormous.\n\nEveryone seems to know where they\'re\ngoing. You keep checking your map.\nYou walk into the wrong building twice.\n\nA professor passes and doesn\'t make\neye contact. Some things are universal.\n\nYou find your first class: ${G.major} 101.`, [
+    {
+      text: 'Sit near the front of class',
+      action: () => classFront()
+    },
+    {
+      text: 'Sit in the middle, blend in',
+      action: () => classMiddle()
+    },
+    {
+      text: 'Sit near the back just in case',
+      action: () => classBack()
+    }
+  ]);
+}
+
+function classFront() {
+  modStats({ stress: 5, social: 10, spirit: 5 }, '✨ Bold move! Professor noticed you.');
+  setDialogue('📚 PROFESSOR HAYES', `"I see we have some new faces.\nWhy don\'t we do quick introductions?\nName, where you\'re from, one fun fact."\n\nYour heart stops.\n\nYou\'re suddenly very aware of your\naccent. But you raise your hand first.\n\n"Hi, I\'m ${G.name}. I\'m from ${G.origin}.\nA fun fact... I flew 10,000 miles to\nbe here today."\n\nLight laughter. Warm laughter.`, [
+    {
+      text: '[Exhale. That went okay.]',
+      action: () => campusPostClass()
+    }
+  ]);
+}
+
+function classMiddle() {
+  modStats({ stress: -5, social: 3 });
+  setDialogue('📚 CLASS — MIDDLE ROW', `You find a seat between a guy in\na hoodie and someone already asleep.\n\nThe professor lectures. The slides are\nfast. The references are local — memes,\npop culture jokes you half-get.\n\nSomeone passes you a syllabus.\nThe workload... is significant.`, [
+    {
+      text: 'Take notes diligently',
+      action: () => { modStats({ stress: 5, spirit: 3 }, '📝 Good habit formed.'); campusPostClass(); }
+    },
+    {
+      text: 'Record the lecture on your phone',
+      action: () => { modStats({ stress: -5 }, '🎙 Smart backup.'); campusPostClass(); }
+    }
+  ]);
+}
+
+function classBack() {
+  modStats({ social: -3, stress: -3 });
+  setDialogue('📚 CLASS — BACK ROW', `You take a back seat.\n\nFrom here you can see the whole room.\nAbout 30 students. Three other people\nwho look international (you can tell\nby the subtle "first day" energy).\n\nYou make eye contact with one of them.\nThey give you a slight nod.\n\nA nod of solidarity.`, [
+    {
+      text: 'Nod back. Maybe introduce yourself after.',
+      action: () => { modStats({ social: 5 }); campusPostClass(); }
+    },
+    {
+      text: 'Look back at your notes. Be focused.',
+      action: () => campusPostClass()
+    }
+  ]);
+}
+
+function campusPostClass() {
+  setDialogue('🏫 AFTER CLASS', `Class ends. People scatter fast.\n\nYou drift toward the exit. The campus\nfeels alive but you feel like a ghost\nmoving through it — visible but not\nquite connected.\n\nYou have 2 hours before your next class.`, [
+    {
+      text: 'Go to the library to review notes',
+      action: () => { modStats({ stress: -8, spirit: 3 }, '📖 Productive! Stress reduced.'); campusHub(); }
+    },
+    {
+      text: 'Explore campus alone',
+      action: () => campusExplore()
+    },
+    {
+      text: 'Look for other international students',
+      action: () => campusEncounter()
+    }
+  ]);
+}
+
+function campusExplore() {
+  modStats({ spirit: 8, social: 3 }, '🗺 You know the campus better now.');
+  setDialogue('🏫 EXPLORING', `You wander.\n\nYou find:\n• A quiet courtyard with a fountain\n• A free coffee station in the library\n• The International House bulletin board\n  (events, language exchange, etc.)\n• A campus cat that everyone calls\n  "Professor Whiskers"`, [
+    {
+      text: 'Sign up for a language exchange event',
+      action: () => { G.flags.signedLanguageExchange = true; modStats({ social: 10 }, '📝 Signed up! Social +10'); campusHub(); }
+    },
+    {
+      text: 'Pet Professor Whiskers. Non-negotiable.',
+      action: () => { modStats({ spirit: 15, stress: -10 }, '🐱 +15 spirit. Worth it.'); campusHub(); }
+    }
+  ]);
+}
+
+function campusEncounter() {
+  if (G.flags.foundFriends) { campusHub(); return; }
+  setDialogue('🏫 CAMPUS LAWN', `You spot a small group sitting on the\ngrass. One person is speaking a language\nyou recognize from home.\n\nAnother is showing something on their\nphone, everyone leaning in to look.\n\nOne of them sees you hovering.`, [
+    {
+      text: '"Hey — sorry, I heard you speaking. I\'m ${G.name}."',
+      action: () => campusMeetGroup()
+    },
+    {
+      text: 'Keep walking. Maybe next time.',
+      action: () => { modStats({ social: -5, homesick: 5 }); campusHub(); }
+    }
+  ]);
+}
+
+function campusMeetGroup() {
+  G.flags.foundFriends = true;
+  modStats({ social: 20, homesick: -15, spirit: 10 }, '🌟 FOUND YOUR PEOPLE! +20 social!');
+  setDialogue('🌍 THE GROUP', `"Oh! Where you from?\n${G.origin}?? Ayyy, I\'m from Vietnam,\nshe\'s from Ecuador, and he\'s from\nGhana. We\'re the \'struggling but\nthriving\' international squad."\n\nLaughter. Real laughter.\n\nThey scoot over to make room.\nYou sit down.\n\nSomething clicks into place.`, [
+    {
+      text: '"What\'s the hardest thing so far?"',
+      action: () => campusTrueConvo()
+    },
+    {
+      text: '"Can you guys show me around campus?"',
+      action: () => { modStats({ social: 5, stress: -5 }, '🗺 Campus tour with new friends!'); campusHub(); }
+    }
+  ]);
+}
+
+function campusTrueConvo() {
+  modStats({ spirit: 15, homesick: -10 }, '💬 Real conversation. This matters.');
+  setDialogue('🌍 THE GROUP — HONEST HOUR', `"The loneliness. At first I thought\nsomething was wrong with me."\n\n"The food. I cry about the food."\n\n"Explaining my visa status every time\nI want to do literally anything."\n\n"Missing every family thing back home\nand just... watching on FaceTime."\n\nYou nod to every single one.`, [
+    {
+      text: '"Same. All of it. Exactly that."',
+      action: () => { modStats({ spirit: 8, stress: -8, homesick: -5 }); campusHub(); }
+    }
+  ]);
+}
+
+function campusHub() {
+  setDialogue('🏫 CAMPUS', `You\'re on campus. Day ${G.day}.\n\nStress: ${Math.round(G.stats.stress)} | Social: ${Math.round(G.stats.social)}\n\nClasses are in session. Life continues.`, [
+    {
+      text: 'Go to class (stress +5, spirit +3)',
+      action: () => { modStats({ stress: 5, spirit: 3 }, '📚 In class. Learning.'); advanceDay(1); campusHub(); }
+    },
+    {
+      text: 'Study at the library',
+      action: () => { modStats({ stress: -5, spirit: 3 }, '📖 Stress reduced.'); campusHub(); }
+    },
+    {
+      text: 'Hang out with friends',
+      action: () => {
+        if (!G.flags.foundFriends) { showNotif('You haven\'t met anyone yet!'); campusHub(); return; }
+        modStats({ social: 15, homesick: -10, stress: -5 }, '🌍 Time with friends. Good for the soul.'); advanceDay(1); campusHub();
+      }
+    },
+    {
+      text: 'Head back to dorm',
+      action: () => navigateTo('dorm')
+    }
+  ]);
+}
+
+// ============================================================
+// CAFETERIA
+// ============================================================
+function enterCafeteria() {
+  G.flags.cafeVisits++;
+  drawScene('cafeteria');
+  updateHUD();
+
+  if (G.flags.cafeVisits === 1) {
+    cafeFirst();
+  } else {
+    cafeHub();
+  }
+}
+
+function cafeFirst() {
+  setDialogue('🍜 CAFETERIA — FIRST VISIT', `You grab a tray and join the line.\n\nThe options are: pizza, burgers,\na "stir fry" station, and a salad bar.\n\nYou approach the stir fry station\nhopefully. The cook smiles.`, [
+    {
+      text: '"What is the stir fry today?"',
+      action: () => cafeCook()
+    },
+    {
+      text: '[Get a burger. Safe choice.]',
+      action: () => { G.money -= 9; modStats({ spirit: -5, homesick: 5 }); updateHUD(); showNotif('🍔 $9 spent. It\'s fine.'); cafeHub(); }
+    },
+    {
+      text: '[Build something from the salad bar]',
+      action: () => { G.money -= 7; modStats({ spirit: 2, stress: -3 }); updateHUD(); showNotif('🥗 $7. Healthy choice!'); cafeHub(); }
+    }
+  ]);
+}
+
+function cafeCook() {
+  setDialogue('👨‍🍳 ROBERTO (CAFETERIA COOK)', `"Today? Chicken teriyaki. But honestly—\n\nYou want a tip? Come by at 11am.\nThat\'s when I make the real stuff.\nNot for the menu, just for us.\nBrought some spices from home.\n\nYou look like you could use something\nthat actually tastes like something."`, [
+    {
+      text: '"...Are you serious? Thank you so much."',
+      action: () => { G.money -= 8; modStats({ spirit: 15, homesick: -10 }, '🌶 Roberto\'s real food: Spirit +15!'); updateHUD(); cafeHub(); }
+    },
+    {
+      text: '"I\'ll come back at 11am for sure."',
+      action: () => { G.flags.robertoFriend = true; modStats({ spirit: 8, social: 5 }); cafeHub(); }
+    }
+  ]);
+}
+
+function cafeHub() {
+  const costStr = G.money >= 9 ? '' : ' [TOO EXPENSIVE]';
+  setDialogue('🍜 CAFETERIA', `You\'re in the cafeteria.\n\nMoney: $${G.money.toFixed(2)}\n\n${G.flags.robertoFriend ? '★ Roberto says hi from the kitchen.' : ''}`, [
+    {
+      text: `Eat a meal ($9)${costStr}`,
+      action: () => {
+        if (G.money < 9) { showNotif('Not enough money!'); return; }
+        G.money -= 9; modStats({ spirit: 8, stress: -5 }, '🍽 Meal eaten.'); updateHUD(); cafeHub();
+      }
+    },
+    {
+      text: 'Sit alone and observe people',
+      action: () => { modStats({ social: -3, stress: -5, spirit: 2 }); setDialogue('👁 OBSERVING', 'You people-watch.\n\nA couple arguing in whispers.\nA lone guy stress-eating.\nA table of friends laughing at\nsomething on a phone.\n\nYou feel like a documentary maker.\nOr a ghost. Hard to tell.', [{ text: '[Back]', action: cafeHub }]); }
+    },
+    {
+      text: 'Try to sit with strangers',
+      action: () => cafeSit()
+    },
+    {
+      text: 'Leave',
+      action: () => navigateTo('dorm')
+    }
+  ]);
+}
+
+function cafeSit() {
+  const roll = Math.random();
+  if (roll > 0.4) {
+    modStats({ social: 10, homesick: -5 }, '👋 New connection!');
+    setDialogue('😊 STRANGERS AT LUNCH', `You sit down.\n\n"Oh, hey. I\'m Priya. This is James.\nAre you new? We can tell —\nyou\'re holding your tray like\nyou\'re afraid of it."\n\nYou all laugh. Awkwardly, then genuinely.\n\nYou talk for 30 minutes.\nYou learn: they\'re also figuring it out.`, [
+      { text: '[Exchange contact info]', action: () => { modStats({ social: 5 }, '📱 Contact saved!'); cafeHub(); } },
+      { text: '[Finish meal and leave]', action: cafeHub }
+    ]);
+  } else {
+    modStats({ social: -5, homesick: 5 });
+    setDialogue('😬 STRANGERS AT LUNCH', `You sit at a table with two people.\n\nThey\'re deep in a conversation.\nThey don\'t acknowledge you.\n\nYou eat quietly.\nThey leave without saying anything.\n\nIt\'s not personal. Probably.\nProbably not personal.`, [
+      { text: '[That stings a little. Keep going.]', action: cafeHub }
+    ]);
+  }
+}
+
+// ============================================================
+// STORE SCENE
+// ============================================================
+function enterStore() {
+  G.flags.storeVisits++;
+  drawScene('store');
+  updateHUD();
+
+  if (G.flags.storeVisits === 1) {
+    storeFirst();
+  } else {
+    storeHub();
+  }
+}
+
+function storeFirst() {
+  setDialogue('🛒 ASIA MART', `The smell hits you first.\n\nFamiliar spices. A brand of noodles\nyou know. Soy sauce in the right\nbottles. The same candy brand from\nwhen you were seven.\n\nYou stop in the middle of the aisle\nand just... breathe it in.\n\nAn older woman catches you staring\nat a bottle of fish sauce.`, [
+    {
+      text: '"Sorry, it just reminded me of home."',
+      action: () => storeMadam()
+    },
+    {
+      text: '[Buy the fish sauce. And three other things.]',
+      action: () => { G.money -= 18; modStats({ spirit: 20, homesick: -15 }, '🏠 Taste of home! Spirit +20!'); G.flags.boughtFood = true; updateHUD(); storeHub(); }
+    }
+  ]);
+}
+
+function storeMadam() {
+  modStats({ spirit: 10, social: 5, homesick: -10 }, '👵 She understands.');
+  setDialogue('👵 MRS. LIM (STORE OWNER)', `She smiles. A warm, knowing smile.\n\n"First year? Ah.\nEveryone cries in this aisle at least once.\nI cried when I first moved here. 1987.\nI went back home for the fish sauce.\n\nNow I bring the fish sauce here.\n\nYou want to try some samples? Come."`, [
+    {
+      text: '[Follow Mrs. Lim to the sample station]',
+      action: () => { modStats({ spirit: 15, homesick: -15 }, '🥘 Free samples + wisdom. +15 spirit.'); storeHub(); }
+    },
+    {
+      text: '"Thank you. I\'ll start shopping."',
+      action: () => storeHub()
+    }
+  ]);
+}
+
+function storeHub() {
+  setDialogue('🛒 ASIA MART', `What are you shopping for?\n\nMoney: $${G.money.toFixed(2)}`, [
+    {
+      text: 'Buy familiar ingredients ($20)',
+      action: () => {
+        if (G.money < 20) { showNotif('Not enough money!'); return; }
+        G.money -= 20; modStats({ spirit: 18, homesick: -12, stress: -5 }, '🛒 Comfort groceries!'); updateHUD(); G.flags.boughtFood = true; storeHub();
+      }
+    },
+    {
+      text: 'Buy just ramen and eggs ($7)',
+      action: () => {
+        if (G.money < 7) { showNotif('Not enough money!'); return; }
+        G.money -= 7; modStats({ spirit: 5 }, '🍜 Budget meal secured.'); updateHUD(); storeHub();
+      }
+    },
+    {
+      text: 'Talk to another customer',
+      action: () => storeTalk()
+    },
+    {
+      text: 'Leave the store',
+      action: () => navigateTo('dorm')
+    }
+  ]);
+}
+
+function storeTalk() {
+  const roll = Math.random();
+  const encounters = [
+    { speaker: '👩 FELLOW STUDENT', text: '"Oh! You\'re shopping here too?\nDo you know if they carry miso paste?\nI\'ve been to three stores. THREE."\n\nYou bond over the 15-minute search.\nYou find it together in aisle 4B.\nTop shelf. Of course.', effect: { social: 10, homesick: -5 } },
+    { speaker: '🧔 LOCAL PROFESSOR', text: '"My wife is from Taiwan. We come here\nevery Saturday. Best lemongrass in\nthe city. You new to the area?"\n\nHe recommends a restaurant run by\na Vietnamese family nearby.\n"Better than anything on campus."', effect: { social: 5, spirit: 8 } },
+    { speaker: '🧑 HOMESICK SENIOR', text: '"You\'re first year? God. I remember.\nJust... find one thing that makes you\nfeel home. One dish, one routine.\nIt helps. I promise it helps."\n\nHe says this while buying 6 bags of\ninstant noodles and a box of pocky.', effect: { spirit: 10, homesick: -8 } },
+  ];
+  const enc = encounters[Math.floor(Math.random() * encounters.length)];
+  modStats(enc.effect, '💬 New encounter!');
+  setDialogue(enc.speaker, enc.text, [{ text: '[Thanks for the conversation]', action: storeHub }]);
+}
+
+// ============================================================
+// PHONE SCENE
+// ============================================================
+function enterPhone() {
+  G.flags.phoneCallCount++;
+  drawScene('phone');
+  updateHUD();
+
+  if (G.flags.phoneCallCount === 1) {
+    phoneFirstCall();
+  } else if (G.flags.phoneCallCount % 3 === 0) {
+    phoneDadCall();
+  } else {
+    phoneMomCall();
+  }
+}
+
+function phoneFirstCall() {
+  const parentTerms = {
+    Philippines: ['Inay', 'Tatay'],
+    China: ['Māmā', 'Bàba'],
+    India: ['Amma', 'Appa'],
+    Nigeria: ['Mama', 'Daddy'],
+    Brazil: ['Mãe', 'Pai'],
+    'South Korea': ['엄마 (Eomma)', '아빠 (Appa)'],
+  };
+  const [mom, dad] = parentTerms[G.origin] || parentTerms.Philippines;
+  G.momName = mom;
+  G.dadName = dad;
+
+  modStats({ homesick: 15 });
+  setDialogue(`📞 ${mom.toUpperCase()} CALLING...`, `The phone rings once.\n\nShe picks up immediately.\nShe was waiting by the phone.\n\n"${G.name}?! Oh thank God. Are you\nokay? Did you eat? How is the room?\nIs it cold? I saw the weather there,\nit looks cold. Did you bring your\njacket? The thick one??"`, [
+    {
+      text: '"I\'m fine, Mom. I\'m safe. I ate."',
+      action: () => phoneMomReassure()
+    },
+    {
+      text: '"Mom... it\'s harder than I expected."',
+      action: () => phoneMomHonest()
+    },
+    {
+      text: '"Everything is great! Don\'t worry!"',
+      action: () => phoneMomLie()
+    }
+  ]);
+}
+
+function phoneMomReassure() {
+  modStats({ homesick: 10, spirit: 5 }, '💕 Reassuring her reassures you too.');
+  setDialogue(`📞 ${G.momName?.toUpperCase() || 'MOM'}`, `She exhales. Long and slow.\n\n"Okay. Good. Good. Your Tita asked\nabout you. Everyone is asking.\n\nWe\'re so proud of you. You know that?\nWe talk about you every day.\nDad set your photo as his phone wallpaper.\nHe\'ll deny it if you ask."\n\nYou laugh. Really laugh.`, [
+    {
+      text: '"Tell him I know. Tell everyone I miss them."',
+      action: () => phoneEndWell()
+    }
+  ]);
+}
+
+function phoneMomHonest() {
+  modStats({ spirit: 15, stress: -10, homesick: 5 }, '💬 Honesty with Mom. That takes courage.');
+  setDialogue(`📞 ${G.momName?.toUpperCase() || 'MOM'}`, `Silence on the line.\n\nThen, softly:\n\n"I know, anak. I know.\nDo you remember when I started my\nnew job in the city? I cried every\nnight for a month. I never told you.\n\nIt doesn\'t mean you\'re weak. It means\nyou\'re going through something real.\nYou\'re allowed to find it hard."`, [
+    {
+      text: '[Cry a little on the phone together]',
+      action: () => { modStats({ spirit: 15, stress: -15, homesick: -5 }, '💕 Shared tears. Better after.'); phoneEndWell(); }
+    },
+    {
+      text: '"Thanks Mom. I needed to hear that."',
+      action: () => phoneEndWell()
+    }
+  ]);
+}
+
+function phoneMomLie() {
+  modStats({ stress: 10, social: -3 }, '😬 Hiding feelings costs spirit over time.');
+  setDialogue(`📞 ${G.momName?.toUpperCase() || 'MOM'}`, `"That\'s wonderful!! See, I knew you\'d\nbe fine. You\'re so strong."\n\nShe sounds so relieved.\nSo happy.\n\nYou stare at your ceiling and\nwonder why you didn\'t just tell her\nthe truth.\n\nMaybe you didn\'t want to worry her.\nMaybe you\'re not sure what the truth is.`, [
+    {
+      text: '[Hang up. Sit with that.]',
+      action: () => phoneEndAlone()
+    }
+  ]);
+}
+
+function phoneDadCall() {
+  setDialogue(`📞 ${G.dadName?.toUpperCase() || 'DAD'} CALLING`, `Your dad is a man of few words.\n\nHe\'ll never say he misses you.\nHe expresses love through logistics.\n\n"Are you eating? Good.\nDid you register for classes?\nDo you have enough money?\nDon\'t get a part-time job yet,\nfocus on school first."\n\nA pause. Then, roughly:\n\n"We\'re watching. We believe in you."`, [
+    {
+      text: '"Thanks, Dad. I\'m working hard."',
+      action: () => { modStats({ spirit: 12, stress: -5 }, '❤️ Dad love: different shape, same weight.'); phoneEndWell(); }
+    },
+    {
+      text: '"Dad, I might need more money this month."',
+      action: () => phoneDadMoney()
+    }
+  ]);
+}
+
+function phoneDadMoney() {
+  const roll = Math.random();
+  if (roll > 0.5) {
+    G.money += 100;
+    modStats({ stress: -10 }, '💰 Dad sent $100. Thank you, Dad.');
+    setDialogue(`📞 ${G.dadName?.toUpperCase() || 'DAD'}`, `"...How much do you need?\n\nOkay. I\'ll send it today.\n\nBut ${G.name} — be careful with spending.\nI know it\'s expensive there. Just...\ndon\'t waste it on things you don\'t need.\n\nI trust you." *(he sends the money)*`, [
+      { text: '[Relief. Pure relief.]', action: () => { updateHUD(); navigateTo('dorm'); } }
+    ]);
+  } else {
+    setDialogue(`📞 ${G.dadName?.toUpperCase() || 'DAD'}`, `"...The money is tight this month.\nYou know your sister\'s school fees...\n\nCan you manage? Make it work.\nCheck if the school has any scholarships\nor work-study programs.\n\nYou\'re smart. You\'ll figure it out."`, [
+      { text: '[It\'s okay. You\'ll figure it out.]', action: () => { modStats({ stress: 10 }); navigateTo('dorm'); } }
+    ]);
+  }
+}
+
+function phoneMomCall() {
+  const topics = [
+    {
+      text: '"Oh, you must eat more vegetables.\nI saw a study — students who don\'t\neat vegetables lose focus. Are you\neating vegetables, ${G.name}?"',
+      choices: [
+        { text: '"Yes Mom. I eat salads." (lie)', action: () => { modStats({ spirit: 3 }); phoneEndWell(); } },
+        { text: '"Kinda. I\'m working on it."', action: () => { modStats({ spirit: 5 }); phoneEndWell(); } }
+      ]
+    },
+    {
+      text: '"Your cousin got a promotion.\nAnd your classmate from high school\nis also studying abroad now. In London!\n\n...Not that I\'m comparing.\nI\'m just saying."',
+      choices: [
+        { text: '"Mom. Please don\'t do that."', action: () => { modStats({ stress: 10, spirit: -5 }); phoneEndAlone(); } },
+        { text: '"Good for them! I\'m doing my best."', action: () => { modStats({ spirit: 5, homesick: 5 }); phoneEndWell(); } }
+      ]
+    },
+    {
+      text: '"I found a recipe for the dish\nyou always loved. I wrote it out.\nShould I send it? Can you cook there?\n\nActually, I\'ll just send it anyway."',
+      choices: [
+        { text: '"Yes, please send it. I miss your cooking."', action: () => { modStats({ spirit: 12, homesick: 10 }); phoneEndWell(); } },
+        { text: '"The dorms don\'t have a real kitchen..."', action: () => { modStats({ homesick: 5 }); phoneEndWell(); } }
+      ]
+    }
+  ];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  const text = topic.text.replace('${G.name}', G.name);
+  modStats({ homesick: 8 });
+  setDialogue(`📞 ${G.momName?.toUpperCase() || 'MOM'}`, text, topic.choices);
+}
+
+function phoneEndWell() {
+  modStats({ homesick: -5, spirit: 5 });
+  setDialogue('📞 CALL ENDED', `"Love you. Study hard. Eat well.\n\nCome home soon, okay? But also —\nstay as long as you need to.\n\nWe\'re here."\n\n[Call ends]\n\nYou sit for a moment.\nThe silence feels different now.\nFull, not empty.`, [
+    { text: '[Head back]', action: () => navigateTo('dorm') }
+  ]);
+}
+
+function phoneEndAlone() {
+  setDialogue('📞 CALL ENDED', `"Okay. Okay. Love you. Bye."\n\n[Call ends]\n\nYou sit in the quiet.\n\nYou know they love you.\nYou know they\'re trying.\nSometimes love and understanding\naren\'t the same thing.\n\nBut they called. They always call.`, [
+    { text: '[Head back]', action: () => navigateTo('dorm') }
+  ]);
+}
+
+// ============================================================
+// INTERNATIONAL OFFICE
+// ============================================================
+function enterOffice() {
+  G.flags.officeVisits++;
+  drawScene('office');
+  updateHUD();
+
+  if (!G.flags.visitedOffice) {
+    G.flags.visitedOffice = true;
+    officeFirst();
+  } else {
+    officeHub();
+  }
+}
+
+function officeFirst() {
+  setDialogue('🏛 INT\'L STUDENT OFFICE', `You push open the door.\n\nBright fluorescent lights. Posters\nfrom every country on the walls.\nA waiting area with uncomfortable chairs.\n\nA woman at the desk looks up.\nHer name tag says: DR. PATRICIA WADE,\nInt\'l Student Advisor.`, [
+    {
+      text: '"Hi, I have an error in the portal..."',
+      action: () => officePortalError()
+    },
+    {
+      text: '"I just wanted to know what resources\nare available."',
+      action: () => officeResources()
+    },
+    {
+      text: '"I\'m struggling a little. Is there\nsomeone I can talk to?"',
+      action: () => officeTalkHelp()
+    }
+  ]);
+}
+
+function officePortalError() {
+  G.flags.registeredClasses = true;
+  modStats({ stress: -15 }, '✅ Classes registered! Stress -15!');
+  setDialogue('🏛 DR. WADE', `"Oh, the B403 error! Yes, happens every\nfall with new international students.\nI can override that right now.\n\nThere. You\'re registered.\n\nWould you like a copy of the\nInternational Student Survival Guide?\nI wrote it myself. Chapter 4 is about\nbeing homesick. Chapters 1-3 are too,\nhonestly. But in different fonts."`, [
+    {
+      text: '"Yes please. And thank you!"',
+      action: () => { G.flags.advisorHelped = true; modStats({ spirit: 8 }, '📖 Survival Guide acquired!'); officeHub(); }
+    }
+  ]);
+}
+
+function officeResources() {
+  modStats({ social: 5, stress: -5 });
+  setDialogue('🏛 DR. WADE', `"Of course! Let me list what we have:\n\n• Free counseling (3 sessions/semester)\n• Language exchange program\n• International Student Association\n  (meetings every Thursday 6pm)\n• Emergency fund applications\n• Cultural celebration events\n• Peer mentor matching\n\nDon\'t wait until you\'re drowning.\nCome early. Use these."`, [
+    {
+      text: 'Sign up for peer mentoring',
+      action: () => { G.flags.hasMentor = true; modStats({ social: 10, spirit: 8 }, '🌟 Mentor matched!'); officeHub(); }
+    },
+    {
+      text: 'Note the ISA meeting (Thursday 6pm)',
+      action: () => { G.flags.notedISA = true; modStats({ social: 5 }); officeHub(); }
+    }
+  ]);
+}
+
+function officeTalkHelp() {
+  modStats({ spirit: 10, stress: -15 }, '💬 Asking for help is brave.');
+  setDialogue('🏛 DR. WADE', `She closes her laptop.\n\n"Sit down. Tell me."\n\nNo clipboard. No checklist.\nShe just... listens.\n\nYou talk for 25 minutes about things\nyou haven\'t said out loud yet.\n\nThe pressure. The loneliness.\nThe guilt of wanting to go home.\nThe fear of failing the people who\nsacrificed for you to be here.\n\n"That last part," she says. "Say more."`, [
+    {
+      text: '"I feel like I can\'t afford to struggle."',
+      action: () => officeDrWadeDeep()
+    }
+  ]);
+}
+
+function officeDrWadeDeep() {
+  modStats({ spirit: 20, stress: -20, homesick: -10 }, '💡 Breakthrough moment! Major boost!');
+  setDialogue('🏛 DR. WADE', `"I hear that from almost every\ninternational student I meet.\n\nYou carry the weight of everyone\nwho hoped for you. That\'s heavy.\n\nBut here\'s what I know after 18 years:\nThe ones who let themselves struggle,\nwho ask for help, who cry and then\nkeep going — they\'re the ones who\nflourish. Not just survive. Flourish.\n\nYou deserve to be here. Not because\nyou\'re perfect. Because you showed up."`, [
+    {
+      text: '[Take that in for a moment]',
+      action: () => { modStats({ spirit: 5 }); officeHub(); }
+    }
+  ]);
+}
+
+function officeHub() {
+  setDialogue('🏛 INT\'L OFFICE', `The office is open. Dr. Wade is here.\n\nSpirit: ${Math.round(G.stats.spirit)} | Stress: ${Math.round(G.stats.stress)}`, [
+    {
+      text: 'Ask about scholarship opportunities',
+      action: () => {
+        const roll = Math.random();
+        if (roll > 0.5) { G.money += 200; updateHUD(); modStats({ spirit: 10, stress: -5 }, '🎉 EMERGENCY SCHOLARSHIP: +$200!'); }
+        else modStats({ stress: 5 }, 'No current openings. Keep checking.');
+        officeHub();
+      }
+    },
+    {
+      text: 'Ask about counseling appointment',
+      action: () => { modStats({ stress: -20, spirit: 10 }, '🧠 Counseling session: Stress -20!'); advanceDay(2); officeHub(); }
+    },
+    {
+      text: 'Ask Dr. Wade for advice',
+      action: () => { modStats({ spirit: 8, stress: -8 }); setDialogue('🏛 DR. WADE', '"One day at a time.\nNot one semester. One day.\nYou can do one day."\n\nSimple. True.', [{ text: '[Thank her and leave]', action: () => navigateTo('dorm') }]); }
+    },
+    {
+      text: 'Leave',
+      action: () => navigateTo('dorm')
+    }
+  ]);
+}
+
+// ============================================================
+// GAME OVER / WIN
+// ============================================================
+function triggerGameOver() {
+  G.gameOver = true;
+  clearChoices();
+  setDialogue('💀 GAME OVER', `Spirit reached zero.\n\nThe weight of it all became too much.\n\nThis isn\'t failure. This is a sign.\nYou deserved more support.\nYou deserved to ask for it sooner.\n\nIn real life: if you\'re struggling,\nplease reach out.\nYour university\'s counseling center.\nA trusted friend. A family member.\n\nYou are not alone in this.\n\n[PRESS START TO TRY AGAIN]`, [
+    {
+      text: '▶ TRY AGAIN',
+      action: () => location.reload()
+    }
+  ]);
+}
+
+// Check for win condition
+function checkWin() {
+  if (G.day >= 60 && G.stats.spirit >= 50 && G.flags.foundFriends && G.flags.visitedOffice) {
+    showWin();
+  }
+}
+
+function showWin() {
+  G.gameOver = true;
+  setDialogue('🌟 END OF SEMESTER', `Day ${G.day}. Semester complete.\n\nYou made it.\n\nNot perfectly. Not without tears.\nNot without the nights you questioned\neverything. But you made it.\n\nYour spirit held. Your people found you.\nYou learned to ask for help.\nYou cooked something from home.\nYou called your mom. Your dad too.\n\nNext semester will be hard too.\nBut you know how to do hard now.\n\n★ CONGRATULATIONS, ${G.name} ★`, [
+    { text: '▶ PLAY AGAIN', action: () => location.reload() }
+  ]);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+// Auto-advance day check
+setInterval(() => {
+  if (!G.gameOver && G.location === 'dorm') {
+    checkWin();
+  }
+}, 5000);
+</script>
+</body>
+</html>
